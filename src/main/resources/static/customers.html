@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer 360° — ComplaintHub</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .cust-grid { display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: start; }
+        @media(max-width:900px){ .cust-grid{grid-template-columns:1fr;} }
+    </style>
+</head>
+<body>
+<div class="main">
+    <div class="page-header">
+        <div class="page-header-left"><h1>Customer 360° View</h1><p>Unified customer profiles and complaint history</p></div>
+    </div>
+    <div class="page-body" id="customer-body">
+        <div class="loading"><div class="spinner"></div>Loading customers...</div>
+    </div>
+</div>
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+<script>
+initLayout('customers');
+
+async function loadCustomers() {
+    const el = document.getElementById('customer-body');
+    try {
+        const res = await api.getCustomers();
+        el.innerHTML = 
+        '<div class="card"><div class="card-header"><h3>Customer Directory</h3></div>' +
+        '<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Customer #</th><th>Customer Name</th><th>Email Address</th><th>Phone Number</th><th>Account Linking</th></tr></thead><tbody>' +
+        res.map(c => '<tr onclick="viewCustomer('+c.id+')" style="cursor:pointer"><td><strong>'+c.customerNumber+'</strong></td><td>'+c.fullName+'</td><td>'+c.email+'</td><td>'+c.phone+'</td><td>'+(c.accountNumber||'<span style="color:var(--text-light)">Unlinked</span>')+'</td></tr>').join('') +
+        '</tbody></table></div></div>';
+    } catch(err) {
+        el.innerHTML = '<div class="empty-state"><p>Error: '+err.message+'</p></div>';
+    }
+}
+
+async function viewCustomer(id) {
+    const el = document.getElementById('customer-body');
+    el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading profile...</div>';
+    try {
+        const cust = await api.getCustomer(id);
+        const complaints = await api.getCustomerComplaints(id);
+
+        let tableHtml = complaints.length ? 
+            '<table class="data-table"><thead><tr><th>Ticket</th><th>Title</th><th>Product</th><th>Severity</th><th>Status</th><th>Date</th></tr></thead><tbody>' +
+            complaints.map(c => '<tr onclick="location.href=\'/complaint-detail.html?id='+c.id+'\'" style="cursor:pointer">' +
+                '<td class="ticket-link">'+(c.ticketNumber||'—')+'</td><td>'+c.title+'</td><td>'+productLabel(c.productType)+'</td><td>'+severityBadge(c.severity)+'</td><td>'+statusBadge(c.status)+'</td><td style="font-size:12px">'+formatDateShort(c.createdAt)+'</td></tr>').join('') +
+            '</tbody></table>' : '<div class="empty-state" style="padding:40px"><p class="empty-text">No complaint history found.</p></div>';
+
+        el.innerHTML = 
+        '<button class="btn btn-ghost mb-24" onclick="loadCustomers()">← Back to Directory</button>' +
+        '<div class="cust-grid">' +
+            '<div class="card">' +
+                '<div class="card-header" style="text-align:center;padding:32px 20px;">' +
+                    '<div style="width:80px;height:80px;background:var(--primary-light);color:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;margin:0 auto 16px;">'+cust.fullName.charAt(0)+'</div>' +
+                    '<h2 style="font-size:20px;margin-bottom:4px;color:var(--text);">'+cust.fullName+'</h2>' +
+                    '<div style="color:var(--text-sec);font-size:14px;">'+cust.customerNumber+'</div>' +
+                '</div>' +
+                '<div class="card-body">' +
+                    '<ul class="info-list">' +
+                        '<li class="info-row"><span class="info-label">Email</span><span class="info-value" style="word-break:break-all;">'+cust.email+'</span></li>' +
+                        '<li class="info-row"><span class="info-label">Phone</span><span class="info-value">'+cust.phone+'</span></li>' +
+                        '<li class="info-row"><span class="info-label">Account #</span><span class="info-value">'+(cust.accountNumber||'—')+'</span></li>' +
+                        '<li class="info-row"><span class="info-label">Total Complaints</span><span class="info-value" style="font-weight:700;">'+complaints.length+'</span></li>' +
+                    '</ul>' +
+                '</div>' +
+            '</div>' +
+            '<div class="card">' +
+                '<div class="card-header" style="justify-content:space-between;display:flex;"><h3>Complaint History</h3></div>' +
+                '<div style="overflow-x:auto">'+tableHtml+'</div>' +
+            '</div>' +
+        '</div>';
+    } catch(err) {
+        el.innerHTML = '<div class="empty-state"><p>Error: '+err.message+'</p></div>';
+    }
+}
+
+loadCustomers();
+</script>
+</body>
+</html>

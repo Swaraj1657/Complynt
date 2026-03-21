@@ -1,0 +1,52 @@
+// ===== API Service =====
+const API = '/api';
+
+const api = {
+    async get(url) {
+        const r = await fetch(API + url);
+        if (!r.ok) throw new Error(`GET ${url}: ${r.status}`);
+        return r.json();
+    },
+    async post(url, data) {
+        const r = await fetch(API + url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.message || `POST ${url}: ${r.status}`); }
+        return r.json();
+    },
+    async patch(url, data) {
+        const r = await fetch(API + url, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        if (!r.ok) throw new Error(`PATCH ${url}: ${r.status}`);
+        return r.json();
+    },
+
+    getComplaints(p = {}) {
+        const q = new URLSearchParams();
+        Object.entries(p).forEach(([k, v]) => { if (v !== '' && v !== null && v !== undefined) q.set(k, v); });
+        return this.get('/complaints?' + q);
+    },
+    getComplaint(id) { return this.get('/complaints/' + id); },
+    createComplaint(d) { return this.post('/complaints', d); },
+    updateStatus(id, status, note) { return this.patch('/complaints/' + id + '/status', { status, note }); },
+    assignAgent(id, agentId) { return this.post('/complaints/' + id + '/assign', { agentId }); },
+    addComment(id, d) { return this.post('/complaints/' + id + '/comments', d); },
+    classifyComplaint(id) { return this.post('/complaints/' + id + '/classify', {}); },
+
+    getSummary() { return this.get('/analytics/summary'); },
+    getTrend(days) { return this.get('/analytics/trend?days=' + (days || 7)); },
+
+    getSla(id) { return this.get('/sla/' + id); },
+    getBreached() { return this.get('/sla/breached'); },
+    getSlaRules() { return this.get('/sla/rules'); },
+
+    getAgents() { return this.get('/agents'); },
+    getCustomers() { return this.get('/customers'); },
+    getCustomerComplaints(id, p, s) { return this.get('/customers/' + id + '/complaints?page=' + (p||0) + '&size=' + (s||20)); },
+
+    async downloadCsv(from, to) {
+        const r = await fetch(API + '/reports/export?from=' + from + '&to=' + to);
+        const b = await r.blob();
+        const u = URL.createObjectURL(b);
+        const a = document.createElement('a'); a.href = u;
+        a.download = 'complaints-' + from + '-to-' + to + '.csv';
+        a.click(); URL.revokeObjectURL(u);
+    }
+};

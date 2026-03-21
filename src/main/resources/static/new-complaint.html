@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit a Complaint — ComplaintHub</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body { background: #f4f6f8; }
+        .user-portal-container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .portal-header { text-align: center; margin-bottom: 40px; }
+        .portal-header h1 { font-size: 28px; color: var(--text); margin-bottom: 8px; letter-spacing: -0.5px; }
+        .portal-header p { color: var(--text-sec); font-size: 15px; }
+        .success-state { display: none; text-align: center; padding: 60px 20px; background: white; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
+        .success-icon { width: 64px; height: 64px; background: #e6fced; color: var(--positive); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+        .success-icon svg { width: 32px; height: 32px; }
+    </style>
+</head>
+<body>
+<div class="user-portal-container">
+    <div class="portal-header">
+        <h1>Complaint Support Portal</h1>
+        <p>We're here to help. Please provide details about your issue below.</p>
+    </div>
+
+    <!-- Success Message (Hidden by default) -->
+    <div id="success-message" class="success-state">
+        <div class="success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2 style="font-size:24px; margin-bottom:12px; color:var(--text);">Complaint Submitted Successfully</h2>
+        <p style="color:var(--text-sec); margin-bottom:24px; font-size:15px;" id="ticket-info">Your ticket number is <strong style="color:var(--text);" id="ticket-number"></strong>. Our team will review your case shortly.</p>
+        <button class="btn btn-primary" onclick="location.reload()">Submit Another Complaint</button>
+    </div>
+
+    <!-- Complaint Form -->
+    <div id="complaint-form" class="card">
+        <div class="card-header">
+            <h3>Customer Details</h3>
+        </div>
+        <div class="card-body">
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="required">Full Name</label>
+                    <input type="text" id="cust-name" class="form-control" placeholder="e.g. Jane Doe">
+                </div>
+                <div class="form-group">
+                    <label class="required">Email Address</label>
+                    <input type="email" id="cust-email" class="form-control" placeholder="jane.doe@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="required">Phone Number</label>
+                    <input type="tel" id="cust-phone" class="form-control" placeholder="+91 9876543210">
+                </div>
+                <div class="form-group">
+                    <label>Account Number (Optional)</label>
+                    <input type="text" id="cust-acc" class="form-control" placeholder="12-digit account number">
+                </div>
+            </div>
+        </div>
+
+        <div class="card-header" style="border-top: 1px solid var(--border);">
+            <h3>Issue Information</h3>
+        </div>
+        <div class="card-body">
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="required">Product Category</label>
+                    <select id="comp-product" class="form-control">
+                        <option value="">Select a product...</option>
+                        <option value="CREDIT_CARD">Credit Card</option>
+                        <option value="HOME_LOAN">Home Loan</option>
+                        <option value="SAVINGS_ACCOUNT">Savings Account</option>
+                        <option value="FIXED_DEPOSIT">Fixed Deposit</option>
+                        <option value="INSURANCE">Insurance</option>
+                        <option value="PERSONAL_LOAN">Personal Loan</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="required">Issue Type</label>
+                    <select id="comp-issue" class="form-control">
+                        <option value="">Select issue type...</option>
+                        <option value="TRANSACTION_DISPUTE">Transaction Dispute</option>
+                        <option value="FEE_COMPLAINT">Fee Issue / Hidden Charges</option>
+                        <option value="KYC_ISSUE">KYC / Documentation</option>
+                        <option value="SERVICE_OUTAGE">Service Outage / App Issue</option>
+                        <option value="FRAUD_REPORT">Fraud Report (Urgent)</option>
+                        <option value="GENERAL_INQUIRY">General Inquiry</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-top:16px;">
+                <label class="required">Subject / Brief Title</label>
+                <input type="text" id="comp-title" class="form-control" placeholder="Briefly describe the issue">
+            </div>
+            
+            <div class="form-group">
+                <label class="required">Detailed Description</label>
+                <textarea id="comp-desc" class="form-control" rows="5" placeholder="Please provide all relevant details, dates, and amounts related to your complaint..."></textarea>
+            </div>
+        </div>
+
+        <div class="card-body" style="border-top: 1px solid var(--border); display: flex; justify-content: flex-end; align-items: center; gap: 16px;">
+            <span style="font-size: 13px; color: var(--text-sec);" id="submit-error" class="error-text"></span>
+            <button class="btn btn-primary" id="btn-submit" onclick="submitComplaint()">Submit Complaint</button>
+        </div>
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+async function submitComplaint() {
+    // Reset errors
+    const errEl = document.getElementById('submit-error');
+    errEl.textContent = '';
+    const btn = document.getElementById('btn-submit');
+
+    // Gather data
+    const payload = {
+        customerName: document.getElementById('cust-name').value.trim(),
+        customerEmail: document.getElementById('cust-email').value.trim(),
+        customerPhone: document.getElementById('cust-phone').value.trim(),
+        accountNumber: document.getElementById('cust-acc').value.trim(),
+        productType: document.getElementById('comp-product').value,
+        issueType: document.getElementById('comp-issue').value,
+        title: document.getElementById('comp-title').value.trim(),
+        description: document.getElementById('comp-desc').value.trim()
+        // Note: Severity and Channel are NOT sent. Backend handles them.
+    };
+
+    // Basic validation
+    if (!payload.customerName || !payload.customerEmail || !payload.customerPhone || 
+        !payload.productType || !payload.issueType || !payload.title || !payload.description) {
+        errEl.textContent = 'Please fill in all required fields indicated by an asterisk (*).';
+        return;
+    }
+    if (payload.description.length < 10) {
+        errEl.textContent = 'Description must be at least 10 characters long.';
+        return;
+    }
+
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" style="margin-right:8px; border-color:white; border-bottom-color:transparent; width:14px; height:14px;"></span>Submitting...';
+        
+        const result = await api.createComplaint(payload);
+        
+        // Success: Hide form, show success state
+        document.getElementById('complaint-form').style.display = 'none';
+        document.getElementById('ticket-number').textContent = result.ticketNumber;
+        document.getElementById('success-message').style.display = 'block';
+        window.scrollTo(0, 0);
+
+    } catch (err) {
+        errEl.textContent = 'Error: ' + err.message;
+        btn.disabled = false;
+        btn.textContent = 'Submit Complaint';
+    }
+}
+</script>
+</body>
+</html>

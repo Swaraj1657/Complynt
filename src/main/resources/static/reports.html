@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports — ComplaintHub</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="main">
+    <div class="page-header">
+        <div class="page-header-left"><h1>Reports & Export</h1><p>Generate regulatory compliance reports and CSV exports</p></div>
+    </div>
+    <div class="page-body">
+        <div class="grid-2 mb-24">
+            <div class="card">
+                <div class="card-header"><h3>Export Complaints to CSV</h3></div>
+                <div class="card-body">
+                    <p style="font-size:13px; color:var(--text-sec); margin-bottom:20px;">
+                        Export complaint data for a date range. The CSV includes ticket number, customer details, product, severity, status, SLA info, sentiment, and assigned agent.
+                    </p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>From Date</label>
+                            <input type="date" id="from-date" class="form-control" value="2026-01-01">
+                        </div>
+                        <div class="form-group">
+                            <label>To Date</label>
+                            <input type="date" id="to-date" class="form-control">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="doExport()">Download CSV</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h3>Quick Analytics</h3></div>
+                <div class="card-body" id="quick-analytics">
+                    <div class="loading"><div class="spinner"></div>Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>Regulatory Compliance Notes</h3></div>
+            <div class="card-body">
+                <p style="font-size:13px; line-height:1.8; color:var(--text-sec);">
+                    <strong style="color:var(--text);">RBI Banking Ombudsman Compliance:</strong><br>
+                    • All complaints are tracked with unique ticket numbers<br>
+                    • SLA deadlines are automatically calculated based on severity<br>
+                    • Auto-escalation triggers at configurable SLA thresholds<br>
+                    • Full audit trail maintained for every complaint action<br>
+                    • CSV export includes all fields required for regulatory reporting<br>
+                    • Customer 360° view prevents duplicate complaint confusion<br>
+                    • Regulatory-flagged complaints are highlighted for priority handling
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+<script>
+initLayout('reports');
+
+// Set default to-date as today
+document.getElementById('to-date').value = new Date().toISOString().split('T')[0];
+
+async function doExport() {
+    const from = document.getElementById('from-date').value;
+    const to = document.getElementById('to-date').value;
+    if (!from || !to) { showToast('Select both dates', 'error'); return; }
+    try {
+        await api.downloadCsv(from, to);
+        showToast('CSV downloaded!', 'success');
+    } catch(err) { showToast('Export failed: ' + err.message, 'error'); }
+}
+
+async function loadQuickAnalytics() {
+    const el = document.getElementById('quick-analytics');
+    try {
+        const s = await api.getSummary();
+        el.innerHTML = '<ul class="info-list">' +
+            '<li class="info-row"><span class="info-label">Total Complaints</span><span class="info-value" style="font-size:18px;font-weight:800;">'+s.totalComplaints+'</span></li>' +
+            '<li class="info-row"><span class="info-label">Open</span><span class="info-value">'+s.openCount+'</span></li>' +
+            '<li class="info-row"><span class="info-label">In Progress</span><span class="info-value">'+s.inProgressCount+'</span></li>' +
+            '<li class="info-row"><span class="info-label">Resolved</span><span class="info-value" style="color:var(--positive)">'+s.resolvedCount+'</span></li>' +
+            '<li class="info-row"><span class="info-label">Escalated</span><span class="info-value" style="color:var(--purple)">'+s.escalatedCount+'</span></li>' +
+            '<li class="info-row"><span class="info-label">SLA Breached</span><span class="info-value" style="color:var(--negative)">'+s.breachedSlaCount+'</span></li>' +
+            '</ul>';
+    } catch(err) { el.innerHTML = '<p>Error loading</p>'; }
+}
+loadQuickAnalytics();
+</script>
+</body>
+</html>
