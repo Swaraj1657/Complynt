@@ -1,84 +1,227 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complaints — ComplaintHub</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Complaints Ledger | Complynt</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet"/>
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-background": "#191c1e",
+                        "outline": "#727786",
+                        "tertiary": "#a23d00",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#eceef0",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "tertiary-container": "#ca4e00",
+                        "on-surface": "#191c1e",
+                        "on-primary-fixed-variant": "#004396",
+                        "primary": "#0058c2",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#c1c6d7",
+                        "primary-container": "#0070f2",
+                        "secondary": "#515f74",
+                        "on-secondary-fixed-variant": "#3a485b",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "primary-fixed": "#d8e2ff",
+                        "surface": "#f7f9fb",
+                        "on-surface-variant": "#414754",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#b9c7df",
+                        "secondary-fixed": "#d5e3fc",
+                        "secondary-container": "#d5e3fc",
+                        "on-primary-container": "#fffeff",
+                        "on-primary-fixed": "#001a42",
+                        "surface-container-low": "#f2f4f6",
+                        "inverse-surface": "#2d3133",
+                        "surface-variant": "#e0e3e5",
+                        "surface-tint": "#005ac4",
+                        "on-tertiary-container": "#fffeff",
+                        "primary-fixed-dim": "#aec6ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#f7f9fb",
+                        "on-secondary-container": "#57657a",
+                        "tertiary-fixed": "#ffdbcd",
+                        "inverse-primary": "#aec6ff",
+                        "error-container": "#ffdad6",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-dim": "#d8dadc",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container-high": "#e6e8ea"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "sans-serif"],
+                        "body": ["IBM Plex Sans", "sans-serif"],
+                        "label": ["IBM Plex Sans", "sans-serif"],
+                        "mono": ["IBM Plex Mono", "monospace"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .data-font { font-family: 'IBM Plex Mono', monospace; }
+        .primary-gradient { background: linear-gradient(135deg, #0058c2 0%, #0070f2 100%); }
+        .table-row-hover:hover { background-color: rgba(0, 112, 242, 0.02); }
+    </style>
 </head>
-<body>
-<div class="main">
-    <div class="page-header">
-        <div class="page-header-left"><h1>Complaints</h1><p>Browse, filter, and manage all complaints</p></div>
-    </div>
-    <div class="page-body">
-        <div class="card">
-            <div class="filter-toolbar">
-                <span class="filter-label">Filters:</span>
-                <select id="f-status" onchange="loadList()">
+<body class="bg-surface font-body text-on-surface antialiased">
+    <main class="ml-64 pt-20 p-8 min-h-screen">
+        <div class="mb-8">
+            <h1 class="text-3xl font-extrabold font-headline tracking-tight text-on-background">Case Ledger</h1>
+            <p class="text-on-surface-variant text-sm mt-1 italic opacity-80">Full administrative record of managed compliance events.</p>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+            <!-- Filter Toolbar -->
+            <div class="px-6 py-4 bg-surface-container-low/50 border-b border-outline-variant/10 flex flex-wrap items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm text-on-surface-variant">filter_list</span>
+                    <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Global Filters</span>
+                </div>
+                
+                <select id="f-status" onchange="loadList()" class="bg-surface-container border border-outline-variant/20 rounded-lg py-1.5 px-3 text-xs focus:ring-1 focus:ring-primary/20 outline-none transition-all">
                     <option value="">All Status</option><option value="OPEN">Open</option><option value="IN_PROGRESS">In Progress</option>
                     <option value="RESOLVED">Resolved</option><option value="ESCALATED">Escalated</option><option value="CLOSED">Closed</option>
                 </select>
-                <select id="f-product" onchange="loadList()">
+
+                <select id="f-product" onchange="loadList()" class="bg-surface-container border border-outline-variant/20 rounded-lg py-1.5 px-3 text-xs focus:ring-1 focus:ring-primary/20 outline-none transition-all">
                     <option value="">All Products</option><option value="CREDIT_CARD">Credit Card</option><option value="HOME_LOAN">Home Loan</option>
                     <option value="SAVINGS_ACCOUNT">Savings Account</option><option value="FIXED_DEPOSIT">Fixed Deposit</option>
                     <option value="INSURANCE">Insurance</option><option value="PERSONAL_LOAN">Personal Loan</option><option value="OTHER">Other</option>
                 </select>
-                <select id="f-severity" onchange="loadList()">
+
+                <select id="f-severity" onchange="loadList()" class="bg-surface-container border border-outline-variant/20 rounded-lg py-1.5 px-3 text-xs focus:ring-1 focus:ring-primary/20 outline-none transition-all">
                     <option value="">All Severity</option><option value="P1">P1 Critical</option><option value="P2">P2 High</option>
                     <option value="P3">P3 Medium</option><option value="P4">P4 Low</option>
                 </select>
-                <button class="btn btn-ghost btn-sm" onclick="clearFilters()">Clear</button>
+
+                <button onclick="clearFilters()" class="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline px-2">Reset</button>
             </div>
-            <div style="overflow-x:auto;">
-                <table class="data-table"><thead><tr>
-                    <th>Ticket #</th><th>Title</th><th>Customer</th><th>Product</th><th>Severity</th><th>Status</th><th>SLA</th><th>Agent</th><th>Created</th>
-                </tr></thead><tbody id="tbody"><tr><td colspan="9"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody></table>
+
+            <!-- Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-surface-container-low/30 border-b border-outline-variant/10">
+                            <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Identity</th>
+                            <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Case Title</th>
+                            <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Client</th>
+                            <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Product</th>
+                            <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Tier</th>
+                            <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Status</th>
+                            <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">SLA</th>
+                            <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Filing Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody" class="divide-y divide-outline-variant/5">
+                        <tr>
+                            <td colspan="8" class="px-6 py-12 text-center text-on-surface-variant text-sm italic">Synchronizing with registry...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-            <div id="paging" class="pagination"></div>
+
+            <!-- Pagination -->
+            <div id="paging" class="px-6 py-4 bg-surface-container-low/20 border-t border-outline-variant/10 flex items-center justify-between">
+                <!-- Dynamic Content -->
+            </div>
         </div>
-    </div>
-</div>
-<script src="/js/api.js"></script>
-<script src="/js/common.js"></script>
-<script>
-initLayout('complaints');
-var curPage = 0;
-function clearFilters() { document.getElementById('f-status').value=''; document.getElementById('f-product').value=''; document.getElementById('f-severity').value=''; loadList(); }
-async function loadList(page) {
-    curPage = page || 0;
-    var tbody = document.getElementById('tbody');
-    tbody.innerHTML = '<tr><td colspan="9"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr>';
-    try {
-        var data = await api.getComplaints({ page: curPage, size: 15,
-            status: document.getElementById('f-status').value,
-            productType: document.getElementById('f-product').value,
-            severity: document.getElementById('f-severity').value });
-        var list = data.content || [];
-        if (!list.length) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-sec);">No complaints found</td></tr>';
-        } else {
-            tbody.innerHTML = list.map(function(c) {
-                return '<tr onclick="window.location.href=\'/complaint-detail.html?id='+c.id+'\'">' +
-                    '<td><span class="ticket-link">'+(c.ticketNumber||'\u2014')+'</span></td>' +
-                    '<td>'+(c.title||'\u2014')+'</td>' +
-                    '<td>'+(c.customer?c.customer.fullName:'\u2014')+'</td>' +
-                    '<td style="font-size:12px;">'+productLabel(c.productType)+'</td>' +
-                    '<td>'+severityBadge(c.severity)+'</td>' +
-                    '<td>'+statusBadge(c.status)+'</td>' +
-                    '<td>'+slaBadge(c.slaStatus)+'</td>' +
-                    '<td>'+(c.assignedAgent?c.assignedAgent.name:'<em style="color:var(--text-light)">Unassigned</em>')+'</td>' +
-                    '<td style="font-size:12px;color:var(--text-sec);">'+formatDateShort(c.createdAt)+'</td></tr>';
-            }).join('');
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+    initLayout('complaints');
+    var curPage = 0;
+
+    function clearFilters() { 
+        document.getElementById('f-status').value=''; 
+        document.getElementById('f-product').value=''; 
+        document.getElementById('f-severity').value=''; 
+        loadList(); 
+    }
+
+    async function loadList(page) {
+        curPage = page || 0;
+        var tbody = document.getElementById('tbody');
+        tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-12 text-center"><div class="animate-spin inline-block h-6 w-6 border-2 border-primary border-b-transparent rounded-full mb-2"></div><p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Accessing Data...</p></td></tr>';
+        
+        try {
+            var data = await api.getComplaints({ 
+                page: curPage, size: 12,
+                status: document.getElementById('f-status').value,
+                productType: document.getElementById('f-product').value,
+                severity: document.getElementById('f-severity').value 
+            });
+            
+            var list = data.content || [];
+            if (!list.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-12 text-center text-on-surface-variant italic">No matched records found in current view.</td></tr>';
+            } else {
+                tbody.innerHTML = list.map(function(c) {
+                    return `
+                        <tr onclick="window.location.href='/complaint-detail.html?id=${c.id}'" class="table-row-hover cursor-pointer transition-colors group">
+                            <td class="px-6 py-4">
+                                <span class="data-font text-[10px] font-bold text-primary px-2 py-0.5 bg-primary/5 rounded border border-primary/10 group-hover:bg-primary group-hover:text-white transition-all">#${c.ticketNumber || 'N/A'}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-on-surface text-sm tracking-tight">${c.title || 'Untitled Case'}</div>
+                                <div class="text-[10px] text-on-surface-variant/70 uppercase font-mono">${c.channel || 'DIRECT'}</div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-on-surface font-medium">${c.customer ? c.customer.fullName : 'Anonymous'}</td>
+                            <td class="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">${productLabel(c.productType)}</td>
+                            <td class="px-6 py-4">${severityBadge(c.severity)}</td>
+                            <td class="px-6 py-4">${statusBadge(c.status)}</td>
+                            <td class="px-6 py-4">${slaBadge(c.slaStatus)}</td>
+                            <td class="px-6 py-4 text-[10px] text-on-surface-variant font-bold font-mono">${formatDateShort(c.createdAt)}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Pagination Render
+            var tp = data.totalPages || 0;
+            var pg = document.getElementById('paging');
+            if (tp <= 1) { 
+                pg.innerHTML = '<span class="text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest">End of Record</span>'; 
+                return; 
+            }
+            
+            pg.innerHTML = `
+                <button ${curPage === 0 ? 'disabled' : ''} onclick="loadList(${curPage - 1})" class="px-4 py-1.5 rounded-lg border border-outline-variant/30 text-[10px] font-bold uppercase tracking-widest hover:bg-surface-container disabled:opacity-30 transition-all flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs">chevron_left</span> Previous
+                </button>
+                <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Entry Group ${curPage + 1} of ${tp}</span>
+                <button ${curPage >= tp - 1 ? 'disabled' : ''} onclick="loadList(${curPage + 1})" class="px-4 py-1.5 rounded-lg border border-outline-variant/30 text-[10px] font-bold uppercase tracking-widest hover:bg-surface-container disabled:opacity-30 transition-all flex items-center gap-1">
+                    Next <span class="material-symbols-outlined text-xs">chevron_right</span>
+                </button>
+            `;
+        } catch (err) { 
+            tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-12 text-center text-error font-bold uppercase tracking-widest text-xs">Synchronizer Error: ${err.message}</td></tr>`; 
         }
-        var tp = data.totalPages || 0;
-        var pg = document.getElementById('paging');
-        if (tp <= 1) { pg.innerHTML = ''; return; }
-        pg.innerHTML = '<button '+(curPage===0?'disabled':'')+' onclick="loadList('+(curPage-1)+')">Prev</button>' +
-            '<span>Page '+(curPage+1)+' of '+tp+'</span>' +
-            '<button '+(curPage>=tp-1?'disabled':'')+' onclick="loadList('+(curPage+1)+')">Next</button>';
-    } catch (err) { tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>Error: '+err.message+'</p></div></td></tr>'; }
-}
-loadList();
-</script>
+    }
+
+    loadList();
+    </script>
 </body>
 </html>

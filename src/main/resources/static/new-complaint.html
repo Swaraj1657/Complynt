@@ -1,164 +1,253 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submit a Complaint — ComplaintHub</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Submit a Resolution Request | Complynt</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+    <!-- Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-background": "#191c1e",
+                        "outline": "#727786",
+                        "tertiary": "#a23d00",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#eceef0",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "tertiary-container": "#ca4e00",
+                        "on-surface": "#191c1e",
+                        "on-primary-fixed-variant": "#004396",
+                        "primary": "#0058c2",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#c1c6d7",
+                        "primary-container": "#0070f2",
+                        "secondary": "#515f74",
+                        "on-secondary-fixed-variant": "#3a485b",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "primary-fixed": "#d8e2ff",
+                        "surface": "#f7f9fb",
+                        "on-surface-variant": "#414754",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#b9c7df",
+                        "secondary-fixed": "#d5e3fc",
+                        "secondary-container": "#d5e3fc",
+                        "on-primary-container": "#fffeff",
+                        "on-primary-fixed": "#001a42",
+                        "surface-container-low": "#f2f4f6",
+                        "inverse-surface": "#2d3133",
+                        "surface-variant": "#e0e3e5",
+                        "surface-tint": "#005ac4",
+                        "on-tertiary-container": "#fffeff",
+                        "primary-fixed-dim": "#aec6ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#f7f9fb",
+                        "on-secondary-container": "#57657a",
+                        "tertiary-fixed": "#ffdbcd",
+                        "inverse-primary": "#aec6ff",
+                        "error-container": "#ffdad6",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-dim": "#d8dadc",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container-high": "#e6e8ea"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"],
+                        "mono": ["IBM Plex Mono"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
     <style>
-        body { background: #f4f6f8; }
-        .user-portal-container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
-        .portal-header { text-align: center; margin-bottom: 40px; }
-        .portal-header h1 { font-size: 28px; color: var(--text); margin-bottom: 8px; letter-spacing: -0.5px; }
-        .portal-header p { color: var(--text-sec); font-size: 15px; }
-        .success-state { display: none; text-align: center; padding: 60px 20px; background: white; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
-        .success-icon { width: 64px; height: 64px; background: #e6fced; color: var(--positive); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
-        .success-icon svg { width: 32px; height: 32px; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .primary-gradient { background: linear-gradient(135deg, #0058c2 0%, #0070f2 100%); }
     </style>
 </head>
-<body>
-<div class="user-portal-container">
-    <div class="portal-header">
-        <h1>Complaint Support Portal</h1>
-        <p>We're here to help. Please provide details about your issue below.</p>
-    </div>
+<body class="bg-surface font-body text-on-surface antialiased">
+    <!-- Main Content Canvas -->
+    <main class="pt-12 pb-12 px-8 min-h-screen">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header Section -->
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest mb-4">
+                    <span class="material-symbols-outlined text-sm">shield_with_heart</span>
+                    Official Support Channel
+                </div>
+                <h2 class="text-4xl font-extrabold font-headline tracking-tight text-on-background mb-4">Resolution Request Portal</h2>
+                <p class="text-on-surface-variant max-w-lg mx-auto leading-relaxed">Please provide the necessary compliance details to initiate the formal investigation process. All data entered is system-audited.</p>
+            </div>
 
-    <!-- Success Message (Hidden by default) -->
-    <div id="success-message" class="success-state">
-        <div class="success-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <h2 style="font-size:24px; margin-bottom:12px; color:var(--text);">Complaint Submitted Successfully</h2>
-        <p style="color:var(--text-sec); margin-bottom:24px; font-size:15px;" id="ticket-info">Your ticket number is <strong style="color:var(--text);" id="ticket-number"></strong>. Our team will review your case shortly.</p>
-        <button class="btn btn-primary" onclick="location.reload()">Submit Another Complaint</button>
-    </div>
+            <!-- Success Message (Shared Component from common/api logic) -->
+            <div id="success-message" class="hidden bg-surface-container-lowest rounded-xl shadow-[0_12px_40px_rgba(0,88,194,0.06)] border border-emerald-200 overflow-hidden text-center p-12 animate-in fade-in zoom-in duration-500">
+                <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-6 mx-auto">
+                    <span class="material-symbols-outlined text-3xl font-bold">check_circle</span>
+                </div>
+                <h2 class="text-2xl font-extrabold font-headline text-on-surface mb-2">Submission Successful</h2>
+                <p class="text-on-surface-variant mb-8" id="ticket-info">Your ticket number is <strong class="text-primary font-mono" id="ticket-number"></strong>. Our team will review your case shortly.</p>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <button class="primary-gradient px-8 py-3 rounded-lg text-sm font-bold text-white shadow-lg" onclick="location.reload()">Submit Another</button>
+                    <button class="px-8 py-3 rounded-lg border border-outline-variant text-sm font-bold text-on-surface-variant hover:bg-surface-container transition-colors" onclick="window.location.href='/'">Go to Dashboard</button>
+                </div>
+            </div>
 
-    <!-- Complaint Form -->
-    <div id="complaint-form" class="card">
-        <div class="card-header">
-            <h3>Customer Details</h3>
-        </div>
-        <div class="card-body">
-            <div class="grid-2">
-                <div class="form-group">
-                    <label class="required">Full Name</label>
-                    <input type="text" id="cust-name" class="form-control" placeholder="e.g. Jane Doe">
+            <!-- Focused Central Card -->
+            <div id="complaint-form" class="bg-surface-container-lowest rounded-xl shadow-[0_12px_40px_rgba(0,88,194,0.06)] border border-outline-variant/10 overflow-hidden">
+                <div class="bg-surface-container-low px-8 py-4 border-b border-outline-variant/15 flex justify-between items-center">
+                    <span class="text-xs font-bold font-headline uppercase tracking-widest text-on-surface-variant">Formal Intake Form</span>
+                    <span class="font-mono text-[10px] text-primary bg-primary/10 px-2 py-1 rounded">SYS_AUTH: V2-2026</span>
                 </div>
-                <div class="form-group">
-                    <label class="required">Email Address</label>
-                    <input type="email" id="cust-email" class="form-control" placeholder="jane.doe@example.com">
-                </div>
-                <div class="form-group">
-                    <label class="required">Phone Number</label>
-                    <input type="tel" id="cust-phone" class="form-control" placeholder="+91 9876543210">
-                </div>
-                <div class="form-group">
-                    <label>Account Number (Optional)</label>
-                    <input type="text" id="cust-acc" class="form-control" placeholder="12-digit account number">
+                <div class="p-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <!-- Full Name -->
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-2">Full Name <span class="text-error">*</span></label>
+                            <input id="cust-name" class="w-full bg-surface-container-lowest border-outline-variant/30 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 outline-none placeholder:text-outline/50 font-body text-sm" placeholder="e.g. Jane Doe" type="text"/>
+                        </div>
+                        <!-- Email -->
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-2">Email Address <span class="text-error">*</span></label>
+                            <input id="cust-email" class="w-full bg-surface-container-lowest border-outline-variant/30 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 outline-none placeholder:text-outline/50 font-body text-sm" placeholder="jane.doe@example.com" type="email"/>
+                        </div>
+                        <!-- Phone -->
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-2">Phone Number <span class="text-error">*</span></label>
+                            <input id="cust-phone" class="w-full bg-surface-container-lowest border-outline-variant/30 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 outline-none placeholder:text-outline/50 font-body text-sm" placeholder="+91 9876543210" type="tel"/>
+                        </div>
+                        <!-- Account -->
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-2">Account Number</label>
+                            <input id="cust-acc" class="w-full bg-surface-container-lowest border-outline-variant/30 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 outline-none placeholder:text-outline/50 font-mono text-sm tracking-widest" placeholder="CR-000-000" type="text"/>
+                        </div>
+                        <!-- Product -->
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-2">Product Category <span class="text-error">*</span></label>
+                            <select id="comp-product" class="w-full bg-surface-container-lowest border-outline-variant/30 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 outline-none font-body text-sm appearance-none">
+                                <option value="">Select a product...</option>
+                                <option value="CREDIT_CARD">Credit Card</option>
+                                <option value="HOME_LOAN">Home Loan</option>
+                                <option value="SAVINGS_ACCOUNT">Savings Account</option>
+                                <option value="FIXED_DEPOSIT">Fixed Deposit</option>
+                                <option value="INSURANCE">Insurance</option>
+                                <option value="PERSONAL_LOAN">Personal Loan</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                        <!-- Issue Type -->
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-2">Issue Type <span class="text-error">*</span></label>
+                            <select id="comp-issue" class="w-full bg-surface-container-lowest border-outline-variant/30 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 outline-none font-body text-sm appearance-none">
+                                <option value="">Select issue type...</option>
+                                <option value="TRANSACTION_DISPUTE">Transaction Dispute</option>
+                                <option value="FEE_COMPLAINT">Fee Issue / Hidden Charges</option>
+                                <option value="KYC_ISSUE">KYC / Documentation</option>
+                                <option value="SERVICE_OUTAGE">Service Outage / App Issue</option>
+                                <option value="FRAUD_REPORT">Fraud Report (Urgent)</option>
+                                <option value="GENERAL_INQUIRY">General Inquiry</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Subject -->
+                    <div class="space-y-2 mb-8">
+                        <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-2">Subject / Brief Title <span class="text-error">*</span></label>
+                        <input id="comp-title" class="w-full bg-surface-container-lowest border-outline-variant/30 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 outline-none placeholder:text-outline/50 font-body text-sm" placeholder="Briefly describe the issue" type="text"/>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="space-y-2 mb-8">
+                        <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-2">Detailed Description <span class="text-error">*</span></label>
+                        <textarea id="comp-desc" class="w-full bg-surface-container-lowest border-outline-variant/30 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 outline-none placeholder:text-outline/50 font-body text-sm" placeholder="Please provide all relevant details, dates, and amounts related to your complaint..." rows="5"></textarea>
+                    </div>
+
+                    <!-- Warning Information -->
+                    <div class="mb-8 flex gap-4 p-4 bg-tertiary-fixed rounded-xl border border-tertiary/10">
+                        <span class="material-symbols-outlined text-tertiary">warning</span>
+                        <div class="space-y-1">
+                            <p class="text-[10px] font-bold text-tertiary-container uppercase tracking-tight">System Notice</p>
+                            <p class="text-[11px] text-on-tertiary-fixed-variant leading-relaxed">Ensure all entity names match the legal documentation exactly. Misleading information may lead to investigation delays.</p>
+                        </div>
+                    </div>
+
+                    <!-- Footer Actions -->
+                    <div class="flex flex-col sm:flex-row items-center justify-between pt-6 border-t border-outline-variant/10 gap-4">
+                        <span id="submit-error" class="text-xs font-bold text-error"></span>
+                        <div class="flex gap-4">
+                            <button class="px-6 py-2.5 rounded-lg border border-outline-variant/30 text-xs font-bold text-on-surface-variant hover:bg-surface-container transition-colors" type="button" onclick="window.location.href='/'">Cancel</button>
+                            <button id="btn-submit" class="primary-gradient px-10 py-2.5 rounded-lg text-xs font-bold text-white shadow-lg shadow-primary/30 flex items-center gap-2 transition-all active:scale-95" onclick="submitComplaint()">
+                                Submit Request
+                                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+    </main>
 
-        <div class="card-header" style="border-top: 1px solid var(--border);">
-            <h3>Issue Information</h3>
-        </div>
-        <div class="card-body">
-            <div class="grid-2">
-                <div class="form-group">
-                    <label class="required">Product Category</label>
-                    <select id="comp-product" class="form-control">
-                        <option value="">Select a product...</option>
-                        <option value="CREDIT_CARD">Credit Card</option>
-                        <option value="HOME_LOAN">Home Loan</option>
-                        <option value="SAVINGS_ACCOUNT">Savings Account</option>
-                        <option value="FIXED_DEPOSIT">Fixed Deposit</option>
-                        <option value="INSURANCE">Insurance</option>
-                        <option value="PERSONAL_LOAN">Personal Loan</option>
-                        <option value="OTHER">Other</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="required">Issue Type</label>
-                    <select id="comp-issue" class="form-control">
-                        <option value="">Select issue type...</option>
-                        <option value="TRANSACTION_DISPUTE">Transaction Dispute</option>
-                        <option value="FEE_COMPLAINT">Fee Issue / Hidden Charges</option>
-                        <option value="KYC_ISSUE">KYC / Documentation</option>
-                        <option value="SERVICE_OUTAGE">Service Outage / App Issue</option>
-                        <option value="FRAUD_REPORT">Fraud Report (Urgent)</option>
-                        <option value="GENERAL_INQUIRY">General Inquiry</option>
-                        <option value="OTHER">Other</option>
-                    </select>
-                </div>
-            </div>
+    <script src="/js/api.js"></script>
+    <script>
+    async function submitComplaint() {
+        const errEl = document.getElementById('submit-error');
+        errEl.textContent = '';
+        const btn = document.getElementById('btn-submit');
+
+        const payload = {
+            customerName: document.getElementById('cust-name').value.trim(),
+            customerEmail: document.getElementById('cust-email').value.trim(),
+            customerPhone: document.getElementById('cust-phone').value.trim(),
+            accountNumber: document.getElementById('cust-acc').value.trim(),
+            productType: document.getElementById('comp-product').value,
+            issueType: document.getElementById('comp-issue').value,
+            title: document.getElementById('comp-title').value.trim(),
+            description: document.getElementById('comp-desc').value.trim()
+        };
+
+        if (!payload.customerName || !payload.customerEmail || !payload.customerPhone || 
+            !payload.productType || !payload.issueType || !payload.title || !payload.description) {
+            errEl.textContent = 'Please fill in all required fields indicated by *.';
+            return;
+        }
+        if (payload.description.length < 10) {
+            errEl.textContent = 'Description must be at least 10 characters long.';
+            return;
+        }
+
+        try {
+            btn.disabled = true;
+            btn.innerHTML = '<div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>Processing...';
             
-            <div class="form-group" style="margin-top:16px;">
-                <label class="required">Subject / Brief Title</label>
-                <input type="text" id="comp-title" class="form-control" placeholder="Briefly describe the issue">
-            </div>
+            const result = await api.createComplaint(payload);
             
-            <div class="form-group">
-                <label class="required">Detailed Description</label>
-                <textarea id="comp-desc" class="form-control" rows="5" placeholder="Please provide all relevant details, dates, and amounts related to your complaint..."></textarea>
-            </div>
-        </div>
+            document.getElementById('complaint-form').classList.add('hidden');
+            document.getElementById('ticket-number').textContent = result.ticketNumber;
+            document.getElementById('success-message').classList.remove('hidden');
+            document.getElementById('success-message').classList.add('block');
+            window.scrollTo(0, 0);
 
-        <div class="card-body" style="border-top: 1px solid var(--border); display: flex; justify-content: flex-end; align-items: center; gap: 16px;">
-            <span style="font-size: 13px; color: var(--text-sec);" id="submit-error" class="error-text"></span>
-            <button class="btn btn-primary" id="btn-submit" onclick="submitComplaint()">Submit Complaint</button>
-        </div>
-    </div>
-</div>
-
-<script src="/js/api.js"></script>
-<script>
-async function submitComplaint() {
-    // Reset errors
-    const errEl = document.getElementById('submit-error');
-    errEl.textContent = '';
-    const btn = document.getElementById('btn-submit');
-
-    // Gather data
-    const payload = {
-        customerName: document.getElementById('cust-name').value.trim(),
-        customerEmail: document.getElementById('cust-email').value.trim(),
-        customerPhone: document.getElementById('cust-phone').value.trim(),
-        accountNumber: document.getElementById('cust-acc').value.trim(),
-        productType: document.getElementById('comp-product').value,
-        issueType: document.getElementById('comp-issue').value,
-        title: document.getElementById('comp-title').value.trim(),
-        description: document.getElementById('comp-desc').value.trim()
-        // Note: Severity and Channel are NOT sent. Backend handles them.
-    };
-
-    // Basic validation
-    if (!payload.customerName || !payload.customerEmail || !payload.customerPhone || 
-        !payload.productType || !payload.issueType || !payload.title || !payload.description) {
-        errEl.textContent = 'Please fill in all required fields indicated by an asterisk (*).';
-        return;
+        } catch (err) {
+            errEl.textContent = 'Error: ' + err.message;
+            btn.disabled = false;
+            btn.innerHTML = 'Submit Request <span class="material-symbols-outlined text-sm">arrow_forward</span>';
+        }
     }
-    if (payload.description.length < 10) {
-        errEl.textContent = 'Description must be at least 10 characters long.';
-        return;
-    }
-
-    try {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner" style="margin-right:8px; border-color:white; border-bottom-color:transparent; width:14px; height:14px;"></span>Submitting...';
-        
-        const result = await api.createComplaint(payload);
-        
-        // Success: Hide form, show success state
-        document.getElementById('complaint-form').style.display = 'none';
-        document.getElementById('ticket-number').textContent = result.ticketNumber;
-        document.getElementById('success-message').style.display = 'block';
-        window.scrollTo(0, 0);
-
-    } catch (err) {
-        errEl.textContent = 'Error: ' + err.message;
-        btn.disabled = false;
-        btn.textContent = 'Submit Complaint';
-    }
-}
-</script>
+    </script>
 </body>
 </html>

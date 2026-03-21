@@ -1,94 +1,226 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports — ComplaintHub</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Regulatory Registry | Complynt</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet"/>
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-background": "#191c1e",
+                        "outline": "#727786",
+                        "tertiary": "#a23d00",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#eceef0",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "tertiary-container": "#ca4e00",
+                        "on-surface": "#191c1e",
+                        "on-primary-fixed-variant": "#004396",
+                        "primary": "#0058c2",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#c1c6d7",
+                        "primary-container": "#0070f2",
+                        "secondary": "#515f74",
+                        "on-secondary-fixed-variant": "#3a485b",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "primary-fixed": "#d8e2ff",
+                        "surface": "#f7f9fb",
+                        "on-surface-variant": "#414754",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#b9c7df",
+                        "secondary-fixed": "#d5e3fc",
+                        "secondary-container": "#d5e3fc",
+                        "on-primary-container": "#fffeff",
+                        "on-primary-fixed": "#001a42",
+                        "surface-container-low": "#f2f4f6",
+                        "inverse-surface": "#2d3133",
+                        "surface-variant": "#e0e3e5",
+                        "surface-tint": "#005ac4",
+                        "on-tertiary-container": "#fffeff",
+                        "primary-fixed-dim": "#aec6ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#f7f9fb",
+                        "on-secondary-container": "#57657a",
+                        "tertiary-fixed": "#ffdbcd",
+                        "inverse-primary": "#aec6ff",
+                        "error-container": "#ffdad6",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-dim": "#d8dadc",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container-high": "#e6e8ea"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "sans-serif"],
+                        "body": ["IBM Plex Sans", "sans-serif"],
+                        "label": ["IBM Plex Sans", "sans-serif"],
+                        "mono": ["IBM Plex Mono", "monospace"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .data-font { font-family: 'IBM Plex Mono', monospace; }
+        .primary-gradient { background: linear-gradient(135deg, #0058c2 0%, #0070f2 100%); }
+    </style>
 </head>
-<body>
-<div class="main">
-    <div class="page-header">
-        <div class="page-header-left"><h1>Reports & Export</h1><p>Generate regulatory compliance reports and CSV exports</p></div>
-    </div>
-    <div class="page-body">
-        <div class="grid-2 mb-24">
-            <div class="card">
-                <div class="card-header"><h3>Export Complaints to CSV</h3></div>
-                <div class="card-body">
-                    <p style="font-size:13px; color:var(--text-sec); margin-bottom:20px;">
-                        Export complaint data for a date range. The CSV includes ticket number, customer details, product, severity, status, SLA info, sentiment, and assigned agent.
+<body class="bg-surface font-body text-on-surface antialiased">
+    <main class="ml-64 pt-20 p-8 min-h-screen">
+        <div class="mb-8">
+            <h1 class="text-3xl font-extrabold font-headline tracking-tight text-on-background">Regulatory Registry</h1>
+            <p class="text-on-surface-variant text-sm mt-1 italic opacity-80">Synthesizing compliance reports and auditing historical event vectors.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Left: Export Card -->
+            <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+                <div class="px-6 py-4 bg-surface-container-low/50 border-b border-outline-variant/10 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-sm text-primary">download</span>
+                    <h2 class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Archival Export Protocol</h2>
+                </div>
+                <div class="p-6">
+                    <p class="text-on-surface-variant text-[11px] font-bold uppercase tracking-tighter mb-6 opacity-60">
+                        Synthesizing managed event data for temporal analysis. Archival CSV includes ticket indices, entity metadata, compliance velocity, and status history.
                     </p>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>From Date</label>
-                            <input type="date" id="from-date" class="form-control" value="2026-01-01">
-                        </div>
-                        <div class="form-group">
-                            <label>To Date</label>
-                            <input type="date" id="to-date" class="form-control">
+                    <div class="space-y-4 mb-8">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 block">Temporal Origin</label>
+                                <input type="date" id="from-date" class="w-full bg-surface-container-low border border-outline-variant/10 rounded-lg px-4 py-2.5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all" value="2026-01-01">
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5 block">Temporal Horizon</label>
+                                <input type="date" id="to-date" class="w-full bg-surface-container-low border border-outline-variant/10 rounded-lg px-4 py-2.5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 transition-all">
+                            </div>
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="doExport()">Download CSV</button>
+                    <button onclick="doExport()" class="w-full primary-gradient text-white text-[10px] font-bold uppercase tracking-widest py-3 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-sm">database</span>
+                        Generate Archival CSV
+                    </button>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-header"><h3>Quick Analytics</h3></div>
-                <div class="card-body" id="quick-analytics">
-                    <div class="loading"><div class="spinner"></div>Loading...</div>
+
+            <!-- Right: Performance Card -->
+            <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+                <div class="px-6 py-4 bg-surface-container-low/50 border-b border-outline-variant/10 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-sm text-primary">analytics</span>
+                    <h2 class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Real-Time Performance Indices</h2>
+                </div>
+                <div class="p-6" id="quick-analytics">
+                    <div class="flex items-center justify-center h-32">
+                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header"><h3>Regulatory Compliance Notes</h3></div>
-            <div class="card-body">
-                <p style="font-size:13px; line-height:1.8; color:var(--text-sec);">
-                    <strong style="color:var(--text);">RBI Banking Ombudsman Compliance:</strong><br>
-                    • All complaints are tracked with unique ticket numbers<br>
-                    • SLA deadlines are automatically calculated based on severity<br>
-                    • Auto-escalation triggers at configurable SLA thresholds<br>
-                    • Full audit trail maintained for every complaint action<br>
-                    • CSV export includes all fields required for regulatory reporting<br>
-                    • Customer 360° view prevents duplicate complaint confusion<br>
-                    • Regulatory-flagged complaints are highlighted for priority handling
-                </p>
+        <!-- Compliance Notes -->
+        <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+            <div class="px-6 py-4 bg-tertiary/5 border-b border-tertiary/10 flex items-center gap-3">
+                <span class="material-symbols-outlined text-sm text-tertiary">verified_user</span>
+                <h2 class="text-[11px] font-bold uppercase tracking-widest text-tertiary">Regulatory Adherence Directives</h2>
+            </div>
+            <div class="p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-4">RBI Banking Ombudsman Compliance</h3>
+                        <div class="space-y-3">
+                            ${complianceTag('Unique Immutable Ticket Indices')}
+                            ${complianceTag('Automated SLA Threshold Calculations')}
+                            ${complianceTag('Configurable Escalation Logic Triggers')}
+                            ${complianceTag('Complete Atomic Audit Log Persistence')}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-4">Operational Best Practices</h3>
+                        <div class="space-y-3">
+                            ${complianceTag('CSV Schema Regulatory Parity')}
+                            ${complianceTag('Entity-Centric 360° Deduplication')}
+                            ${complianceTag('Critical Severity Event Prioritization')}
+                            ${complianceTag('Transparent Grievance Lifecycle Management')}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
-<script src="/js/api.js"></script>
-<script src="/js/common.js"></script>
-<script>
-initLayout('reports');
+    </main>
 
-// Set default to-date as today
-document.getElementById('to-date').value = new Date().toISOString().split('T')[0];
+    <script src="/js/api.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+    initLayout('reports');
 
-async function doExport() {
-    const from = document.getElementById('from-date').value;
-    const to = document.getElementById('to-date').value;
-    if (!from || !to) { showToast('Select both dates', 'error'); return; }
-    try {
-        await api.downloadCsv(from, to);
-        showToast('CSV downloaded!', 'success');
-    } catch(err) { showToast('Export failed: ' + err.message, 'error'); }
-}
+    function complianceTag(text) {
+        return `
+            <div class="flex items-center gap-3 group">
+                <div class="w-1 h-1 rounded-full bg-tertiary/40 group-hover:bg-tertiary transition-colors"></div>
+                <span class="text-[11px] font-bold text-on-surface-variant italic group-hover:text-on-surface transition-colors">${text}</span>
+            </div>
+        `;
+    }
 
-async function loadQuickAnalytics() {
-    const el = document.getElementById('quick-analytics');
-    try {
-        const s = await api.getSummary();
-        el.innerHTML = '<ul class="info-list">' +
-            '<li class="info-row"><span class="info-label">Total Complaints</span><span class="info-value" style="font-size:18px;font-weight:800;">'+s.totalComplaints+'</span></li>' +
-            '<li class="info-row"><span class="info-label">Open</span><span class="info-value">'+s.openCount+'</span></li>' +
-            '<li class="info-row"><span class="info-label">In Progress</span><span class="info-value">'+s.inProgressCount+'</span></li>' +
-            '<li class="info-row"><span class="info-label">Resolved</span><span class="info-value" style="color:var(--positive)">'+s.resolvedCount+'</span></li>' +
-            '<li class="info-row"><span class="info-label">Escalated</span><span class="info-value" style="color:var(--purple)">'+s.escalatedCount+'</span></li>' +
-            '<li class="info-row"><span class="info-label">SLA Breached</span><span class="info-value" style="color:var(--negative)">'+s.breachedSlaCount+'</span></li>' +
-            '</ul>';
-    } catch(err) { el.innerHTML = '<p>Error loading</p>'; }
-}
-loadQuickAnalytics();
-</script>
+    // Set default to-date as today
+    document.getElementById('to-date').value = new Date().toISOString().split('T')[0];
+
+    async function doExport() {
+        const from = document.getElementById('from-date').value;
+        const to = document.getElementById('to-date').value;
+        if (!from || !to) { showToast('Temporal parameters required', 'error'); return; }
+        try {
+            await api.downloadCsv(from, to);
+            showToast('Archival registry export successful', 'success');
+        } catch(err) { showToast('Export protocol failure: ' + err.message, 'error'); }
+    }
+
+    async function loadQuickAnalytics() {
+        const el = document.getElementById('quick-analytics');
+        try {
+            const s = await api.getSummary();
+            el.innerHTML = `
+                <div class="space-y-3">
+                    ${statItem('Aggregate Event Volume', s.totalComplaints, 'primary')}
+                    ${statItem('In-System Managed Events', s.openCount + s.inProgressCount, 'primary')}
+                    ${statItem('Finalized Case Closures', s.resolvedCount, 'on-surface-variant')}
+                    <div class="pt-2 mt-2 border-t border-outline-variant/5">
+                        ${statItem('Escalation Protocol Active', s.escalatedCount, 'tertiary')}
+                        ${statItem('Compliance SLA Breach Count', s.breachedSlaCount, 'error')}
+                    </div>
+                </div>
+            `;
+        } catch(err) { el.innerHTML = '<p class="text-xs font-bold text-error uppercase italic">Fault: Index Synchronization Failure</p>'; }
+    }
+
+    function statItem(label, val, colorClass) {
+        const c = colorClass === 'primary' ? 'text-primary' : colorClass === 'tertiary' ? 'text-tertiary' : colorClass === 'error' ? 'text-error' : 'text-on-surface-variant';
+        return `
+            <div class="flex justify-between items-center group">
+                <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">${label}</span>
+                <span class="data-font text-lg font-bold ${c}">${val}</span>
+            </div>
+        `;
+    }
+
+    loadQuickAnalytics();
+    </script>
 </body>
 </html>

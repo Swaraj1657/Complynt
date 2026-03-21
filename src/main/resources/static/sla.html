@@ -1,70 +1,211 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SLA Monitor — ComplaintHub</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>SLA Monitor | Complynt</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet"/>
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-background": "#191c1e",
+                        "outline": "#727786",
+                        "tertiary": "#a23d00",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#eceef0",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "tertiary-container": "#ca4e00",
+                        "on-surface": "#191c1e",
+                        "on-primary-fixed-variant": "#004396",
+                        "primary": "#0058c2",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#c1c6d7",
+                        "primary-container": "#0070f2",
+                        "secondary": "#515f74",
+                        "on-secondary-fixed-variant": "#3a485b",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "primary-fixed": "#d8e2ff",
+                        "surface": "#f7f9fb",
+                        "on-surface-variant": "#414754",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#b9c7df",
+                        "secondary-fixed": "#d5e3fc",
+                        "secondary-container": "#d5e3fc",
+                        "on-primary-container": "#fffeff",
+                        "on-primary-fixed": "#001a42",
+                        "surface-container-low": "#f2f4f6",
+                        "inverse-surface": "#2d3133",
+                        "surface-variant": "#e0e3e5",
+                        "surface-tint": "#005ac4",
+                        "on-tertiary-container": "#fffeff",
+                        "primary-fixed-dim": "#aec6ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#f7f9fb",
+                        "on-secondary-container": "#57657a",
+                        "tertiary-fixed": "#ffdbcd",
+                        "inverse-primary": "#aec6ff",
+                        "error-container": "#ffdad6",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-dim": "#d8dadc",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container-high": "#e6e8ea"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "sans-serif"],
+                        "body": ["IBM Plex Sans", "sans-serif"],
+                        "label": ["IBM Plex Sans", "sans-serif"],
+                        "mono": ["IBM Plex Mono", "monospace"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .data-font { font-family: 'IBM Plex Mono', monospace; }
+        .primary-gradient { background: linear-gradient(135deg, #0058c2 0%, #0070f2 100%); }
+    </style>
 </head>
-<body>
-<div class="main">
-    <div class="page-header">
-        <div class="page-header-left"><h1>SLA Monitor</h1><p>Track SLA breaches, at-risk complaints, and escalation rules</p></div>
-    </div>
-    <div class="page-body" id="sla-body">
-        <div class="loading"><div class="spinner"></div>Loading SLA data...</div>
-    </div>
-</div>
-<script src="/js/api.js"></script>
-<script src="/js/common.js"></script>
-<script>
-initLayout('sla');
-
-async function loadSla() {
-    const el = document.getElementById('sla-body');
-    try {
-        const [breached, rules] = await Promise.all([api.getBreached(), api.getSlaRules()]);
-
-        el.innerHTML = `
-        <div class="tile-grid mb-24">
-            <div class="tile tile-negative">
-                <div class="tile-label">SLA Breached</div>
-                <div class="tile-value">${breached.length}</div>
-                <div class="tile-sub">Overdue complaints</div>
-            </div>
+<body class="bg-surface font-body text-on-surface antialiased">
+    <main class="ml-64 pt-20 p-8 min-h-screen">
+        <div class="mb-8">
+            <h1 class="text-3xl font-extrabold font-headline tracking-tight text-on-background">SLA Performance Registry</h1>
+            <p class="text-on-surface-variant text-sm mt-1 italic opacity-80">Monitoring response velocity and contractual obligation adherence.</p>
         </div>
 
-        <!-- Breached Complaints -->
-        <div class="card mb-24">
-            <div class="card-header"><h3>Breached & At-Risk Complaints</h3></div>
-            ${breached.length ? '<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Ticket</th><th>Title</th><th>Severity</th><th>Status</th><th>SLA</th><th>Created</th></tr></thead><tbody>' +
-            breached.map(c => '<tr onclick="location.href=\'/complaint-detail.html?id='+c.id+'\'" style="cursor:pointer">' +
-                '<td class="ticket-link">'+(c.ticketNumber||'—')+'</td>' +
-                '<td>'+c.title+'</td>' +
-                '<td>'+severityBadge(c.severity)+'</td>' +
-                '<td>'+statusBadge(c.status)+'</td>' +
-                '<td>'+slaBadge(c.slaStatus)+'</td>' +
-                '<td style="font-size:12px">'+formatDateShort(c.createdAt)+'</td></tr>').join('') +
-            '</tbody></table></div>' :
-            '<div class="card-body"><div class="empty-state"><p class="empty-text">No SLA breaches! All complaints are on track.</p></div></div>'}
-        </div>
-
-        <!-- SLA Rules -->
-        <div class="card">
-            <div class="card-header"><h3>SLA Configuration Rules</h3></div>
-            <div style="overflow-x:auto">
-                <table class="data-table">
-                    <thead><tr><th>Rule ID</th><th>Severity Trigger</th><th>SLA Hours</th><th>Warning %</th><th>Product Area</th></tr></thead>
-                    <tbody>
-                        ${rules.map(r => '<tr><td>Rule #'+r.id+'</td><td><span class="badge badge-'+(r.severity||'').toLowerCase()+'">'+(r.severity||'—')+'</span></td><td style="font-weight:700">'+r.slaHours+' hrs</td><td>'+r.warnAtPercent+'%</td><td>'+(r.productType?productLabel(r.productType):'<span style="color:var(--text-light)">Global (All Products)</span>')+'</td></tr>').join('')}
-                    </tbody>
-                </table>
+        <div id="sla-body">
+            <div class="flex items-center justify-center h-[50vh]">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <span class="ml-4 text-on-surface-variant font-bold uppercase tracking-widest text-sm">Synchronizing SLA Data...</span>
             </div>
-        </div>`;
-    } catch(err) {
-        el.innerHTML = '<div class="empty-state"><p>Error: '+err.message+'</p></div>';
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+    initLayout('sla');
+
+    async function loadSla() {
+        const el = document.getElementById('sla-body');
+        try {
+            const [breached, rules] = await Promise.all([api.getBreached(), api.getSlaRules()]);
+
+            el.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                    <div class="bg-error/5 border border-error/10 rounded-xl p-6 shadow-sm">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="material-symbols-outlined text-error text-xl">warning</span>
+                            <span class="text-[10px] font-bold text-error uppercase tracking-widest">Active Breaches</span>
+                        </div>
+                        <div class="text-4xl font-extrabold font-headline text-error">${breached.length}</div>
+                        <div class="text-[10px] text-error/70 font-bold uppercase tracking-tighter mt-1">Managed Events Overdue</div>
+                    </div>
+                </div>
+
+                <!-- Breached Section -->
+                <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden mb-12">
+                    <div class="px-6 py-4 bg-surface-container-low/50 border-b border-outline-variant/10 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-sm text-primary">gavel</span>
+                        <h2 class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Breached & Critical Thresholds</h2>
+                    </div>
+                    
+                    ${breached.length ? `
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="bg-surface-container-low/30 border-b border-outline-variant/10">
+                                        <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Identity</th>
+                                        <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Narrative</th>
+                                        <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Tier</th>
+                                        <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Compliance</th>
+                                        <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Report Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-outline-variant/5">
+                                    ${breached.map(c => `
+                                        <tr onclick="location.href='/complaint-detail.html?id=${c.id}'" class="hover:bg-error/[0.02] cursor-pointer transition-colors group">
+                                            <td class="px-6 py-4">
+                                                <span class="data-font text-[10px] font-bold text-primary px-2 py-0.5 bg-primary/5 rounded border border-primary/10">#${c.ticketNumber || 'N/A'}</span>
+                                            </td>
+                                            <td class="px-6 py-4 text-sm font-bold text-on-surface group-hover:text-error transition-colors">${c.title}</td>
+                                            <td class="px-6 py-4">${severityBadge(c.severity)}</td>
+                                            <td class="px-6 py-4">${slaBadge(c.slaStatus)}</td>
+                                            <td class="px-6 py-4 text-[10px] text-on-surface-variant font-bold font-mono">${formatDateShort(c.createdAt)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : `
+                        <div class="p-12 text-center text-on-surface-variant italic">
+                            <span class="material-symbols-outlined text-4xl mb-2 opacity-20 block">verified_user</span>
+                            Perfect Adherence: All managed events are within contractual SLA limits.
+                        </div>
+                    `}
+                </div>
+
+                <!-- Configuration Rules -->
+                <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+                    <div class="px-6 py-4 bg-surface-container-low/50 border-b border-outline-variant/10 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-sm text-primary">settings_applications</span>
+                        <h2 class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">SLA Protocol Parameters</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="bg-surface-container-low/30 border-b border-outline-variant/10">
+                                    <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Protocol ID</th>
+                                    <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Trigger Tier</th>
+                                    <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Temporal Limit</th>
+                                    <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Notification %</th>
+                                    <th class="px-6 py-3 text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest">Scope</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline-variant/5">
+                                ${rules.map(r => `
+                                    <tr>
+                                        <td class="px-6 py-4 text-[10px] font-bold font-mono text-on-surface-variant">PROC_SLA_${r.id}</td>
+                                        <td class="px-6 py-4">${severityBadge(r.severity)}</td>
+                                        <td class="px-6 py-4 text-sm font-extrabold text-on-surface italic">${r.slaHours} HR LIMIT</td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-12 h-1 bg-surface-container rounded-full overflow-hidden">
+                                                    <div class="h-full bg-primary" style="width: ${r.warnAtPercent}%"></div>
+                                                </div>
+                                                <span class="text-[10px] font-bold text-on-surface-variant">${r.warnAtPercent}%</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-[10px] font-extrabold text-on-surface uppercase tracking-tighter">${r.productType ? productLabel(r.productType) : 'Global Registry'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        } catch(err) {
+            el.innerHTML = `<div class="p-8 bg-error/5 text-error font-bold uppercase tracking-widest text-xs rounded-xl border border-error/10">SLA Registry Access Denied: ${err.message}</div>`;
+        }
     }
-}
-loadSla();
-</script>
+    loadSla();
+    </script>
 </body>
 </html>

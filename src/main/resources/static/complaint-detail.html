@@ -1,197 +1,318 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complaint Details — ComplaintHub</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Case Detail | Complynt</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet"/>
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-background": "#191c1e",
+                        "outline": "#727786",
+                        "tertiary": "#a23d00",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#eceef0",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "tertiary-container": "#ca4e00",
+                        "on-surface": "#191c1e",
+                        "on-primary-fixed-variant": "#004396",
+                        "primary": "#0058c2",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#c1c6d7",
+                        "primary-container": "#0070f2",
+                        "secondary": "#515f74",
+                        "on-secondary-fixed-variant": "#3a485b",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "primary-fixed": "#d8e2ff",
+                        "surface": "#f7f9fb",
+                        "on-surface-variant": "#414754",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#b9c7df",
+                        "secondary-fixed": "#d5e3fc",
+                        "secondary-container": "#d5e3fc",
+                        "on-primary-container": "#fffeff",
+                        "on-primary-fixed": "#001a42",
+                        "surface-container-low": "#f2f4f6",
+                        "inverse-surface": "#2d3133",
+                        "surface-variant": "#e0e3e5",
+                        "surface-tint": "#005ac4",
+                        "on-tertiary-container": "#fffeff",
+                        "primary-fixed-dim": "#aec6ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#f7f9fb",
+                        "on-secondary-container": "#57657a",
+                        "tertiary-fixed": "#ffdbcd",
+                        "inverse-primary": "#aec6ff",
+                        "error-container": "#ffdad6",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-dim": "#d8dadc",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container-high": "#e6e8ea"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "sans-serif"],
+                        "body": ["IBM Plex Sans", "sans-serif"],
+                        "label": ["IBM Plex Sans", "sans-serif"],
+                        "mono": ["IBM Plex Mono", "monospace"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .data-font { font-family: 'IBM Plex Mono', monospace; }
+        .primary-gradient { background: linear-gradient(135deg, #0058c2 0%, #0070f2 100%); }
+        .glass-sidebar { background: rgba(0, 112, 242, 0.05); backdrop-filter: blur(20px) saturate(150%); }
+    </style>
 </head>
-<body>
-<div class="main">
-    <div class="page-body" id="detail-body">
-        <div class="loading"><div class="spinner"></div>Loading complaint...</div>
-    </div>
-</div>
-<script src="/js/api.js"></script>
-<script src="/js/common.js"></script>
-<script>
-initLayout('complaints');
-const urlParams = new URLSearchParams(window.location.search);
-const compId = urlParams.get('id');
-let complaint = null;
-let currentTab = 'details';
+<body class="bg-surface font-body text-on-surface antialiased">
+    <main class="ml-64 pt-20 p-8 min-h-screen">
+        <div id="detail-body">
+            <div class="flex items-center justify-center h-[50vh]">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <span class="ml-4 text-on-surface-variant font-bold uppercase tracking-widest text-sm">Loading Case Folder...</span>
+            </div>
+        </div>
+    </main>
 
-async function loadDetail() {
-    if (!compId) { document.getElementById('detail-body').innerHTML = '<div class="empty-state"><p>No complaint ID provided.</p></div>'; return; }
-    try {
-        complaint = await api.getComplaint(compId);
-        render();
-    } catch(err) {
-        document.getElementById('detail-body').innerHTML = '<div class="empty-state"><p>Error: '+err.message+'</p></div>';
+    <script src="/js/api.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const compId = urlParams.get('id');
+    initLayout('complaints');
+
+    async function loadDetail() {
+        var el = document.getElementById('detail-body');
+        if (!compId) {
+            el.innerHTML = '<div class="p-8 bg-error/10 text-error rounded-xl font-bold">Error: No complaint ID provided.</div>';
+            return;
+        }
+
+        try {
+            const results = await Promise.all([api.getComplaint(compId), api.getTimeline ? api.getTimeline(compId) : Promise.resolve([])]);
+            const c = results[0], timeline = results[1];
+
+            el.innerHTML = `
+                <!-- Top Header: Case Identity -->
+                <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold font-mono rounded">#${c.ticketNumber}</span>
+                            ${statusBadge(c.status)}
+                        </div>
+                        <h1 class="text-3xl font-extrabold font-headline tracking-tight text-on-background">${c.title}</h1>
+                        <p class="text-on-surface-variant text-sm mt-1">Managed Entity: <span class="font-bold text-on-surface">${c.customerName || (c.customer ? c.customer.fullName : 'Unknown')}</span> | Channel: <span class="uppercase font-mono text-[10px] bg-surface-container px-1.5 py-0.5 rounded">${c.channel || 'DIRECT'}</span></p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button class="px-6 py-2.5 rounded-lg border border-outline-variant text-xs font-bold text-on-surface-variant hover:bg-surface-container transition-colors" onclick="window.history.back()">Back to Ledger</button>
+                        <button class="primary-gradient px-8 py-2.5 rounded-lg text-xs font-bold text-white shadow-lg shadow-primary/20 flex items-center gap-2 transition-all active:scale-95" onclick="toggleActionPanel()">
+                            Account Actions
+                            <span class="material-symbols-outlined text-sm">expand_more</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Right/Main Column: Detailed Documentation -->
+                    <div class="lg:col-span-2 space-y-8">
+                        <!-- Primary Folder: Description -->
+                        <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+                            <div class="px-6 py-4 bg-surface-container-low/50 border-b border-outline-variant/10 flex items-center gap-3">
+                                <span class="material-symbols-outlined text-sm text-primary">description</span>
+                                <h2 class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Complaint Narrative</h2>
+                            </div>
+                            <div class="p-6">
+                                <p class="text-sm leading-relaxed text-on-surface-variant whitespace-pre-wrap">${c.description}</p>
+                            </div>
+                        </div>
+
+                        <!-- Technical Ledger: Details -->
+                        <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+                            <div class="px-6 py-4 bg-surface-container-low/50 border-b border-outline-variant/10 flex items-center gap-3">
+                                <span class="material-symbols-outlined text-sm text-primary">terminal</span>
+                                <h2 class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Technical Metadata</h2>
+                            </div>
+                            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
+                                ${metadataItem('Product Category', productLabel(c.productType), 'inventory_2')}
+                                ${metadataItem('Issue Classification', (c.issueType || 'OTHER').replace(/_/g, ' '), 'category')}
+                                ${metadataItem('Severity Tier', severityBadge(c.severity), 'priority_high')}
+                                ${metadataItem('Filing Date', formatDate(c.createdAt), 'event')}
+                                ${metadataItem('Last Activity', formatDate(c.updatedAt), 'update')}
+                                ${metadataItem('SLA Status', slaBadge(c.sla || c.slaStatus), 'timer')}
+                            </div>
+                        </div>
+
+                        <!-- Audit Trail: Timeline -->
+                        <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+                            <div class="px-6 py-4 bg-surface-container-low/50 border-b border-outline-variant/10 flex items-center gap-3">
+                                <span class="material-symbols-outlined text-sm text-primary">history</span>
+                                <h2 class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Case Audit Trail</h2>
+                            </div>
+                            <div class="p-6 space-y-6">
+                                ${Array.isArray(timeline) && timeline.length > 0 ? timeline.map((t, idx) => `
+                                    <div class="relative pl-8 pb-6 last:pb-0">
+                                        ${idx < timeline.length - 1 ? '<div class="absolute left-3 top-2 bottom-0 w-[1px] bg-outline-variant/30"></div>' : ''}
+                                        <div class="absolute left-1.5 top-1.5 w-3 h-3 rounded-full border-2 border-primary bg-surface-container-lowest"></div>
+                                        <div class="flex flex-col gap-1">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-[10px] font-bold font-mono text-primary bg-primary/5 px-2 py-0.5 rounded uppercase tracking-tighter">${t.type || 'LOG'}</span>
+                                                <span class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tight">${formatDate(t.createdAt)}</span>
+                                            </div>
+                                            <p class="text-sm text-on-surface mt-1">${t.content}</p>
+                                            <span class="text-[10px] text-on-surface-variant italic">— ${t.actor || (t.authorName ? t.authorName + ' ('+t.authorRole+')' : 'System Auto-Log')}</span>
+                                        </div>
+                                    </div>
+                                `).join('') : (c.comments && c.comments.length > 0 ? c.comments.map((cm, idx) => `
+                                    <div class="relative pl-8 pb-6 last:pb-0">
+                                        ${idx < c.comments.length - 1 ? '<div class="absolute left-3 top-2 bottom-0 w-[1px] bg-outline-variant/30"></div>' : ''}
+                                        <div class="absolute left-1.5 top-1.5 w-3 h-3 rounded-full border-2 border-primary bg-surface-container-lowest"></div>
+                                        <div class="flex flex-col gap-1">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-[10px] font-bold font-mono text-primary bg-primary/5 px-2 py-0.5 rounded uppercase tracking-tighter">COMMENT</span>
+                                                <span class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tight">${formatDate(cm.createdAt)}</span>
+                                            </div>
+                                            <p class="text-sm text-on-surface mt-1">${cm.content}</p>
+                                            <span class="text-[10px] text-on-surface-variant italic">— ${cm.authorName} (${cm.authorRole})</span>
+                                        </div>
+                                    </div>
+                                `).join('') : '<p class="text-xs text-on-surface-variant italic">No audit events recorded.</p>')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Left/Sidebar Column: Entity & Actions -->
+                    <div class="space-y-8">
+                        <!-- Entity Context -->
+                        <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+                            <div class="px-6 py-4 bg-surface-container-low/50 border-b border-outline-variant/10">
+                                <h2 class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Customer Profile</h2>
+                            </div>
+                            <div class="p-6">
+                                <div class="flex items-center gap-4 mb-6">
+                                    <div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg">${(c.customerName || (c.customer ? c.customer.fullName : 'C')).charAt(0)}</div>
+                                    <div>
+                                        <h3 class="font-bold text-on-surface">${c.customerName || (c.customer ? c.customer.fullName : 'Unknown')}</h3>
+                                        <p class="text-xs text-on-surface-variant italic">${c.customerEmail || (c.customer ? c.customer.email : '')}</p>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center text-xs">
+                                        <span class="text-on-surface-variant">Phone</span>
+                                        <span class="font-bold font-mono text-on-surface">${c.customerPhone || (c.customer ? c.customer.phone : '')}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center text-xs">
+                                        <span class="text-on-surface-variant">Account Ref</span>
+                                        <span class="font-bold font-mono text-on-surface">${c.accountNumber || (c.customer ? c.customer.customerNumber : 'NOT_LINKED')}</span>
+                                    </div>
+                                </div>
+                                <button class="w-full mt-6 py-2 rounded-lg border border-outline-variant/30 text-[10px] font-extrabold uppercase tracking-widest text-on-surface-variant hover:bg-surface-container transition-all" onclick="window.location.href='/customers.html'">View Customer 360</button>
+                            </div>
+                        </div>
+
+                        <!-- Rapid Actions -->
+                        <div id="action-panel" class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+                            <div class="px-6 py-4 bg-surface-container-low/50 border-b border-outline-variant/10">
+                                <h2 class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Workflow Management</h2>
+                            </div>
+                            <div class="p-6 space-y-4">
+                                <div>
+                                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Update Stage</label>
+                                    <select id="status-update" class="w-full bg-surface-container border border-outline-variant/20 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                                        <option value="OPEN" ${c.status === 'OPEN' ? 'selected' : ''}>Open (New)</option>
+                                        <option value="IN_PROGRESS" ${c.status === 'IN_PROGRESS' ? 'selected' : ''}>In Progress</option>
+                                        <option value="RESOLVED" ${c.status === 'RESOLVED' ? 'selected' : ''}>Mark Resolved</option>
+                                        <option value="ESCALATED" ${c.status === 'ESCALATED' ? 'selected' : ''}>Escalate Case</option>
+                                        <option value="CLOSED" ${c.status === 'CLOSED' ? 'selected' : ''}>Archive / Close</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Internal Note</label>
+                                    <textarea id="note-content" class="w-full bg-surface-container border border-outline-variant/20 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[100px]" placeholder="Summary of investigation..."></textarea>
+                                </div>
+                                <button class="w-full primary-gradient text-white py-3 rounded-lg text-sm font-bold shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all flex justify-center items-center gap-2" onclick="commitUpdate()">
+                                    <span class="material-symbols-outlined text-sm">database</span>
+                                    Synchronize Changes
+                                </button>
+                                <button class="w-full mt-2 py-2 rounded-lg border border-primary/20 text-[10px] font-extrabold uppercase tracking-widest text-primary hover:bg-primary/5 transition-all" onclick="runAi()">Run AI Classification</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } catch (err) {
+            el.innerHTML = `<div class="p-8 bg-error/10 text-error rounded-xl font-bold">Failed to synchronize case data: ${err.message}</div>`;
+        }
     }
-}
 
-function render() {
-    const el = document.getElementById('detail-body');
-    if (!complaint) return;
-    const c = complaint;
-    
-    let tabsHtml = 
-        '<div class="tab-bar">' +
-            '<div class="tab ' + (currentTab==='details'?'active':'') + '" onclick="switchTab(\'details\')">General Info</div>' +
-            '<div class="tab ' + (currentTab==='actions'?'active':'') + '" onclick="switchTab(\'actions\')">Actions & Status</div>' +
-            '<div class="tab ' + (currentTab==='communication'?'active':'') + '" onclick="switchTab(\'communication\')">Communication ('+(c.comments?c.comments.length:0)+')</div>' +
-            '<div class="tab ' + (currentTab==='sla'?'active':'') + '" onclick="switchTab(\'sla\')">SLA Tracking</div>' +
-            '<div class="tab ' + (currentTab==='customer'?'active':'') + '" onclick="switchTab(\'customer\')">Customer 360</div>' +
-        '</div>';
-
-    let contentHtml = '';
-    if (currentTab === 'details') {
-        contentHtml = 
-        '<div class="grid-2">' +
-            '<div class="card"><div class="card-header"><h3>Description</h3></div><div class="card-body"><p style="white-space:pre-wrap;line-height:1.6;color:var(--text);">'+c.description+'</p></div></div>' +
-            '<div class="card"><div class="card-header"><h3>AI Classification</h3></div><div class="card-body">' +
-                '<p><strong>Sentiment:</strong> '+(c.sentimentLabel ? '<span class="badge badge-'+c.sentimentLabel.toLowerCase()+'">'+c.sentimentLabel+'</span>' : '<span style="color:var(--text-light)">Pending</span>') + '</p>' +
-                '<p style="margin-top:12px;"><strong>Suggested Action:</strong> '+(c.aiSuggestedResponse || '<span style="color:var(--text-light)">Pending run</span>')+'</p>' +
-                '<button class="btn btn-secondary btn-sm" style="margin-top:16px;" onclick="runAi()">Run Classification</button>' +
-            '</div></div>' +
-        '</div>';
-    } else if (currentTab === 'actions') {
-        contentHtml = 
-        '<div class="grid-2">' +
-            '<div class="card"><div class="card-header"><h3>Change Status</h3></div><div class="card-body">' +
-                '<div class="form-group"><label>New Status</label><select id="new-status" class="form-control"><option value="OPEN" '+(c.status==='OPEN'?'selected':'')+'>Open</option><option value="IN_PROGRESS" '+(c.status==='IN_PROGRESS'?'selected':'')+'>In Progress</option><option value="RESOLVED" '+(c.status==='RESOLVED'?'selected':'')+'>Resolved</option><option value="ESCALATED" '+(c.status==='ESCALATED'?'selected':'')+'>Escalated</option><option value="CLOSED" '+(c.status==='CLOSED'?'selected':'')+'>Closed</option></select></div>' +
-                '<div class="form-group"><label>Internal Note (Optional)</label><textarea id="status-note" class="form-control"></textarea></div>' +
-                '<button class="btn btn-primary" onclick="updateStatus()">Update Status</button>' +
-            '</div></div>' +
-            '<div class="card"><div class="card-header"><h3>Assign Agent</h3></div><div class="card-body">' +
-                '<div class="form-group"><label>Select Agent</label><select id="new-agent" class="form-control"><option value="">Loading agents...</option></select></div>' +
-                '<button class="btn btn-secondary" onclick="assignAgent()">Reassign</button>' +
-            '</div></div>' +
-        '</div>';
-        setTimeout(loadAgentsForDropdown, 0);
-    } else if (currentTab === 'communication') {
-        const commentsHtml = (c.comments || []).map(cm => 
-            '<div class="timeline-item"><div class="timeline-marker"></div><div class="timeline-content">' +
-            '<div class="timeline-header"><strong>'+cm.authorName+'</strong> ('+cm.authorRole+') <span>'+formatDate(cm.createdAt)+'</span>' + (cm.isInternal ? '<span class="badge badge-negative" style="margin-left:8px">Internal</span>' : '') + '</div>' +
-            '<div class="timeline-body">'+cm.content+'</div></div></div>'
-        ).join('') || '<p style="color:var(--text-sec);padding:20px 0;">No communication history.</p>';
-
-        contentHtml = 
-        '<div class="card"><div class="card-header"><h3>Timeline</h3></div><div class="card-body">' +
-            '<div class="timeline">' + commentsHtml + '</div>' +
-            '<div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">' +
-                '<h4>Add Reply</h4>' +
-                '<div class="form-group"><textarea id="reply-text" class="form-control" rows="3" placeholder="Type your message here..."></textarea></div>' +
-                '<div style="display:flex; gap:12px; align-items:center;">' +
-                    '<label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="reply-internal"> Internal Note Only</label>' +
-                    '<button class="btn btn-primary" onclick="addReply()">Send</button>' +
-                '</div>' +
-            '</div>' +
-        '</div></div>';
-    } else if (currentTab === 'sla') {
-        let pct = c.slaStatus ? c.slaStatus.elapsedPercent : 0;
-        let barColor = pct > 100 ? 'var(--negative)' : (pct > 75 ? 'var(--critical)' : 'var(--positive)');
-        
-        contentHtml = 
-        '<div class="card"><div class="card-header"><h3>SLA Monitor</h3></div><div class="card-body">' +
-            '<ul class="info-list" style="margin-bottom:24px;">' +
-                '<li class="info-row"><span class="info-label">Created At</span><span class="info-value">'+formatDate(c.createdAt)+'</span></li>' +
-                '<li class="info-row"><span class="info-label">Target Resolution</span><span class="info-value" style="font-weight:700;">'+formatDate(c.slaDeadline)+'</span></li>' +
-                '<li class="info-row"><span class="info-label">Current Status</span><span class="info-value">'+slaBadge(c.slaStatus)+'</span></li>' +
-            '</ul>' +
-            '<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;font-weight:600;"><span style="color:var(--text-sec)">Time Elapsed</span><span>'+Math.round(pct)+'%</span></div>' +
-            '<div style="width:100%;height:8px;background:var(--border);border-radius:4px;overflow:hidden;"><div style="height:100%;background:'+barColor+';width:'+Math.min(pct, 100)+'%;"></div></div></div>' +
-        '</div></div>';
-    } else if (currentTab === 'customer') {
-        let cust = c.customer;
-        contentHtml = 
-        '<div class="grid-2">' +
-            '<div class="card"><div class="card-header"><h3>Profile Information</h3></div><div class="card-body">' +
-                '<ul class="info-list">' +
-                    '<li class="info-row"><span class="info-label">Customer #</span><span class="info-value">'+cust.customerNumber+'</span></li>' +
-                    '<li class="info-row"><span class="info-label">Full Name</span><span class="info-value">'+cust.fullName+'</span></li>' +
-                    '<li class="info-row"><span class="info-label">Email</span><span class="info-value">'+cust.email+'</span></li>' +
-                    '<li class="info-row"><span class="info-label">Phone</span><span class="info-value">'+cust.phone+'</span></li>' +
-                '</ul>' +
-                '<button class="btn btn-secondary" style="margin-top:16px;width:100%" onclick="window.location.href=\'/customers.html\'">View Full Profile Record</button>' +
-            '</div></div>' +
-        '</div>';
+    function metadataItem(label, val, icon) {
+        return `
+            <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-outline-variant text-lg mt-0.5">${icon}</span>
+                <div>
+                    <dt class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">${label}</dt>
+                    <dd class="text-sm font-bold text-on-surface mt-0.5">${val}</dd>
+                </div>
+            </div>
+        `;
     }
 
-    el.innerHTML = 
-        '<div class="object-header">' +
-            '<div class="object-header-top">' +
-                '<div class="object-title"><h1>'+c.title+'</h1><span style="color:var(--text-sec);font-size:18px;margin-left:8px;">'+c.ticketNumber+'</span></div>' +
-                '<div class="object-actions">' +
-                    '<button class="btn btn-primary" onclick="switchTab(\'actions\')">Manage Process</button>' +
-                '</div>' +
-            '</div>' +
-            '<div class="object-attributes">' +
-                '<div class="attr-item"><span class="attr-label">Status</span><span class="attr-value">'+statusBadge(c.status)+'</span></div>' +
-                '<div class="attr-item"><span class="attr-label">Severity</span><span class="attr-value">'+severityBadge(c.severity)+'</span></div>' +
-                '<div class="attr-item"><span class="attr-label">Product Area</span><span class="attr-value">'+productLabel(c.productType)+'</span></div>' +
-                '<div class="attr-item"><span class="attr-label">Assigned To</span><span class="attr-value">'+(c.assignedAgent?c.assignedAgent.name:'—')+'</span></div>' +
-                '<div class="attr-item"><span class="attr-label">Reported via</span><span class="attr-value">'+(c.channel||'—')+'</span></div>' +
-            '</div>' +
-        '</div>' +
-        tabsHtml +
-        '<div class="page-body">' + contentHtml + '</div>';
-}
+    async function commitUpdate() {
+        const nextStatus = document.getElementById('status-update').value;
+        const note = document.getElementById('note-content').value.trim();
 
-function switchTab(t) { currentTab = t; render(); }
+        if (nextStatus === 'RESOLVED' && !note) {
+            showToast('Investigation summary is mandatory for resolution states.', 'error');
+            return;
+        }
 
-async function loadAgentsForDropdown() {
-    let sel = document.getElementById('new-agent');
-    if (!sel) return;
-    try {
-        let res = await api.getAgents();
-        sel.innerHTML = '<option value="">Select Agent...</option>' + res.map(a => '<option value="'+a.id+'">'+a.name+' ('+a.role+')</option>').join('');
-    } catch(e) { sel.innerHTML = '<option value="">Error loading</option>'; }
-}
+        try {
+            // Support both naming conventions
+            const updateFn = api.updateStatus || api.updateComplaintStatus;
+            await updateFn(compId, nextStatus, note);
+            showToast('Case synchronized successfully. Ledger updated.', 'success');
+            setTimeout(() => loadDetail(), 1000);
+        } catch (err) {
+            showToast('Synchronization error: ' + err.message, 'error');
+        }
+    }
 
-async function updateStatus() {
-    let s = document.getElementById('new-status').value;
-    let n = document.getElementById('status-note').value;
-    try {
-        complaint = await api.updateStatus(compId, s, n);
-        showToast('Status updated');
-        render();
-    } catch(e) { showToast(e.message, 'error'); }
-}
+    async function runAi() {
+        showToast('Running AI Analysis...', 'info');
+        try {
+            await api.classifyComplaint(compId);
+            showToast('Analysis complete. Classification updated.', 'success');
+            setTimeout(() => loadDetail(), 1000);
+        } catch(e) { showToast(e.message, 'error'); }
+    }
 
-async function assignAgent() {
-    let aid = document.getElementById('new-agent').value;
-    if(!aid) return showToast('Select an agent', 'error');
-    try {
-        complaint = await api.assignAgent(compId, aid);
-        showToast('Agent assigned');
-        render();
-    } catch(e) { showToast(e.message, 'error'); }
-}
+    function toggleActionPanel() {
+        const panel = document.getElementById('action-panel');
+        panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        panel.classList.add('ring-2', 'ring-primary/50');
+        setTimeout(() => panel.classList.remove('ring-2', 'ring-primary/50'), 2000);
+    }
 
-async function addReply() {
-    let txt = document.getElementById('reply-text').value;
-    let internal = document.getElementById('reply-internal').checked;
-    if(!txt.trim()) return;
-    try {
-        await api.addComment(compId, txt, 'A. Supervisor', 'SUPERVISOR', internal);
-        document.getElementById('reply-text').value = '';
-        complaint = await api.getComplaint(compId); // Reload to get new comment
-        render();
-        showToast('Reply added');
-    } catch(e) { showToast(e.message, 'error'); }
-}
-
-async function runAi() {
-    showToast('Running AI Analysis...');
-    try {
-        complaint = await api.classifyComplaint(compId);
-        showToast('Analysis complete', 'success');
-        render();
-    } catch(e) { showToast(e.message, 'error'); }
-}
-
-loadDetail();
-</script>
+    loadDetail();
+    </script>
 </body>
 </html>
