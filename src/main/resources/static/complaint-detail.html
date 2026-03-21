@@ -1,197 +1,578 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complaint Details — ComplaintHub</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaint Details - Complynt</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<div class="main">
-    <div class="page-body" id="detail-body">
-        <div class="loading"><div class="spinner"></div>Loading complaint...</div>
+    <main class="app-layout" id="main-content" style="padding:0;">
+        <!-- Object Header -->
+        <div class="object-header" id="object-header">
+            <div class="loading"><div class="spinner"></div> Loading complaint...</div>
+        </div>
+
+        <!-- SLA Bar -->
+        <div id="sla-bar"></div>
+
+        <!-- Tab Strip -->
+        <div class="tab-strip" id="tab-strip" style="padding:0 24px;background:white;display:none;">
+            <button class="tab-btn active" data-tab="details" onclick="switchTab('details')">Details</button>
+            <button class="tab-btn" data-tab="communication" onclick="switchTab('communication')">Communication</button>
+            <button class="tab-btn" data-tab="actions" onclick="switchTab('actions')">Actions</button>
+            <button class="tab-btn" data-tab="sla" onclick="switchTab('sla')">SLA History</button>
+            <button class="tab-btn" data-tab="customer" onclick="switchTab('customer')">Customer 360</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div style="padding:24px;" id="tab-content">
+            <div class="loading"><div class="spinner"></div></div>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Reassign Agent Drawer -->
+    <div class="drawer-overlay" id="agent-drawer-overlay" onclick="closeDrawer('agent-drawer')"></div>
+    <div class="drawer" id="agent-drawer">
+        <div class="drawer-header">
+            <span class="drawer-header__title">Reassign Agent</span>
+            <button class="drawer-close" onclick="closeDrawer('agent-drawer')">&times;</button>
+        </div>
+        <div class="drawer-body" id="agent-drawer-body">
+            <div class="loading"><div class="spinner"></div></div>
+        </div>
     </div>
-</div>
-<script src="/js/api.js"></script>
-<script src="/js/common.js"></script>
-<script>
-initLayout('complaints');
-const urlParams = new URLSearchParams(window.location.search);
-const compId = urlParams.get('id');
-let complaint = null;
-let currentTab = 'details';
 
-async function loadDetail() {
-    if (!compId) { document.getElementById('detail-body').innerHTML = '<div class="empty-state"><p>No complaint ID provided.</p></div>'; return; }
-    try {
-        complaint = await api.getComplaint(compId);
-        render();
-    } catch(err) {
-        document.getElementById('detail-body').innerHTML = '<div class="empty-state"><p>Error: '+err.message+'</p></div>';
-    }
-}
+    <!-- Scripts -->
+    <script src="/js/config.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        // Initialize layout
+        initLayout('complaints');
 
-function render() {
-    const el = document.getElementById('detail-body');
-    if (!complaint) return;
-    const c = complaint;
-    
-    let tabsHtml = 
-        '<div class="tab-bar">' +
-            '<div class="tab ' + (currentTab==='details'?'active':'') + '" onclick="switchTab(\'details\')">General Info</div>' +
-            '<div class="tab ' + (currentTab==='actions'?'active':'') + '" onclick="switchTab(\'actions\')">Actions & Status</div>' +
-            '<div class="tab ' + (currentTab==='communication'?'active':'') + '" onclick="switchTab(\'communication\')">Communication ('+(c.comments?c.comments.length:0)+')</div>' +
-            '<div class="tab ' + (currentTab==='sla'?'active':'') + '" onclick="switchTab(\'sla\')">SLA Tracking</div>' +
-            '<div class="tab ' + (currentTab==='customer'?'active':'') + '" onclick="switchTab(\'customer\')">Customer 360</div>' +
-        '</div>';
+        // State
+        const complaintId = getUrlParam('id');
+        let complaint = null;
+        let currentTab = 'details';
 
-    let contentHtml = '';
-    if (currentTab === 'details') {
-        contentHtml = 
-        '<div class="grid-2">' +
-            '<div class="card"><div class="card-header"><h3>Description</h3></div><div class="card-body"><p style="white-space:pre-wrap;line-height:1.6;color:var(--text);">'+c.description+'</p></div></div>' +
-            '<div class="card"><div class="card-header"><h3>AI Classification</h3></div><div class="card-body">' +
-                '<p><strong>Sentiment:</strong> '+(c.sentimentLabel ? '<span class="badge badge-'+c.sentimentLabel.toLowerCase()+'">'+c.sentimentLabel+'</span>' : '<span style="color:var(--text-light)">Pending</span>') + '</p>' +
-                '<p style="margin-top:12px;"><strong>Suggested Action:</strong> '+(c.aiSuggestedResponse || '<span style="color:var(--text-light)">Pending run</span>')+'</p>' +
-                '<button class="btn btn-secondary btn-sm" style="margin-top:16px;" onclick="runAi()">Run Classification</button>' +
-            '</div></div>' +
-        '</div>';
-    } else if (currentTab === 'actions') {
-        contentHtml = 
-        '<div class="grid-2">' +
-            '<div class="card"><div class="card-header"><h3>Change Status</h3></div><div class="card-body">' +
-                '<div class="form-group"><label>New Status</label><select id="new-status" class="form-control"><option value="OPEN" '+(c.status==='OPEN'?'selected':'')+'>Open</option><option value="IN_PROGRESS" '+(c.status==='IN_PROGRESS'?'selected':'')+'>In Progress</option><option value="RESOLVED" '+(c.status==='RESOLVED'?'selected':'')+'>Resolved</option><option value="ESCALATED" '+(c.status==='ESCALATED'?'selected':'')+'>Escalated</option><option value="CLOSED" '+(c.status==='CLOSED'?'selected':'')+'>Closed</option></select></div>' +
-                '<div class="form-group"><label>Internal Note (Optional)</label><textarea id="status-note" class="form-control"></textarea></div>' +
-                '<button class="btn btn-primary" onclick="updateStatus()">Update Status</button>' +
-            '</div></div>' +
-            '<div class="card"><div class="card-header"><h3>Assign Agent</h3></div><div class="card-body">' +
-                '<div class="form-group"><label>Select Agent</label><select id="new-agent" class="form-control"><option value="">Loading agents...</option></select></div>' +
-                '<button class="btn btn-secondary" onclick="assignAgent()">Reassign</button>' +
-            '</div></div>' +
-        '</div>';
-        setTimeout(loadAgentsForDropdown, 0);
-    } else if (currentTab === 'communication') {
-        const commentsHtml = (c.comments || []).map(cm => 
-            '<div class="timeline-item"><div class="timeline-marker"></div><div class="timeline-content">' +
-            '<div class="timeline-header"><strong>'+cm.authorName+'</strong> ('+cm.authorRole+') <span>'+formatDate(cm.createdAt)+'</span>' + (cm.isInternal ? '<span class="badge badge-negative" style="margin-left:8px">Internal</span>' : '') + '</div>' +
-            '<div class="timeline-body">'+cm.content+'</div></div></div>'
-        ).join('') || '<p style="color:var(--text-sec);padding:20px 0;">No communication history.</p>';
+        // Load complaint detail
+        async function loadComplaint() {
+            if (!complaintId) {
+                document.getElementById('object-header').innerHTML = '<div class="empty-state"><p class="empty-text">No complaint ID provided</p><a href="/complaints.html" class="btn btn-primary" style="margin-top:16px;">Back to Complaints</a></div>';
+                return;
+            }
 
-        contentHtml = 
-        '<div class="card"><div class="card-header"><h3>Timeline</h3></div><div class="card-body">' +
-            '<div class="timeline">' + commentsHtml + '</div>' +
-            '<div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">' +
-                '<h4>Add Reply</h4>' +
-                '<div class="form-group"><textarea id="reply-text" class="form-control" rows="3" placeholder="Type your message here..."></textarea></div>' +
-                '<div style="display:flex; gap:12px; align-items:center;">' +
-                    '<label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="reply-internal"> Internal Note Only</label>' +
-                    '<button class="btn btn-primary" onclick="addReply()">Send</button>' +
-                '</div>' +
-            '</div>' +
-        '</div></div>';
-    } else if (currentTab === 'sla') {
-        let pct = c.slaStatus ? c.slaStatus.elapsedPercent : 0;
-        let barColor = pct > 100 ? 'var(--negative)' : (pct > 75 ? 'var(--critical)' : 'var(--positive)');
-        
-        contentHtml = 
-        '<div class="card"><div class="card-header"><h3>SLA Monitor</h3></div><div class="card-body">' +
-            '<ul class="info-list" style="margin-bottom:24px;">' +
-                '<li class="info-row"><span class="info-label">Created At</span><span class="info-value">'+formatDate(c.createdAt)+'</span></li>' +
-                '<li class="info-row"><span class="info-label">Target Resolution</span><span class="info-value" style="font-weight:700;">'+formatDate(c.slaDeadline)+'</span></li>' +
-                '<li class="info-row"><span class="info-label">Current Status</span><span class="info-value">'+slaBadge(c.slaStatus)+'</span></li>' +
-            '</ul>' +
-            '<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;font-weight:600;"><span style="color:var(--text-sec)">Time Elapsed</span><span>'+Math.round(pct)+'%</span></div>' +
-            '<div style="width:100%;height:8px;background:var(--border);border-radius:4px;overflow:hidden;"><div style="height:100%;background:'+barColor+';width:'+Math.min(pct, 100)+'%;"></div></div></div>' +
-        '</div></div>';
-    } else if (currentTab === 'customer') {
-        let cust = c.customer;
-        contentHtml = 
-        '<div class="grid-2">' +
-            '<div class="card"><div class="card-header"><h3>Profile Information</h3></div><div class="card-body">' +
-                '<ul class="info-list">' +
-                    '<li class="info-row"><span class="info-label">Customer #</span><span class="info-value">'+cust.customerNumber+'</span></li>' +
-                    '<li class="info-row"><span class="info-label">Full Name</span><span class="info-value">'+cust.fullName+'</span></li>' +
-                    '<li class="info-row"><span class="info-label">Email</span><span class="info-value">'+cust.email+'</span></li>' +
-                    '<li class="info-row"><span class="info-label">Phone</span><span class="info-value">'+cust.phone+'</span></li>' +
-                '</ul>' +
-                '<button class="btn btn-secondary" style="margin-top:16px;width:100%" onclick="window.location.href=\'/customers.html\'">View Full Profile Record</button>' +
-            '</div></div>' +
-        '</div>';
-    }
+            try {
+                complaint = await api.getComplaint(complaintId);
+                renderObjectHeader();
+                renderSlaBar();
+                document.getElementById('tab-strip').style.display = 'flex';
+                renderTabContent();
+            } catch (err) {
+                document.getElementById('object-header').innerHTML = '<div class="empty-state"><p class="empty-text">Failed to load complaint</p><p class="empty-sub">' + err.message + '</p><a href="/complaints.html" class="btn btn-primary" style="margin-top:16px;">Back to Complaints</a></div>';
+            }
+        }
 
-    el.innerHTML = 
-        '<div class="object-header">' +
-            '<div class="object-header-top">' +
-                '<div class="object-title"><h1>'+c.title+'</h1><span style="color:var(--text-sec);font-size:18px;margin-left:8px;">'+c.ticketNumber+'</span></div>' +
-                '<div class="object-actions">' +
-                    '<button class="btn btn-primary" onclick="switchTab(\'actions\')">Manage Process</button>' +
-                '</div>' +
-            '</div>' +
-            '<div class="object-attributes">' +
-                '<div class="attr-item"><span class="attr-label">Status</span><span class="attr-value">'+statusBadge(c.status)+'</span></div>' +
-                '<div class="attr-item"><span class="attr-label">Severity</span><span class="attr-value">'+severityBadge(c.severity)+'</span></div>' +
-                '<div class="attr-item"><span class="attr-label">Product Area</span><span class="attr-value">'+productLabel(c.productType)+'</span></div>' +
-                '<div class="attr-item"><span class="attr-label">Assigned To</span><span class="attr-value">'+(c.assignedAgent?c.assignedAgent.name:'—')+'</span></div>' +
-                '<div class="attr-item"><span class="attr-label">Reported via</span><span class="attr-value">'+(c.channel||'—')+'</span></div>' +
-            '</div>' +
-        '</div>' +
-        tabsHtml +
-        '<div class="page-body">' + contentHtml + '</div>';
-}
+        // Render object header
+        function renderObjectHeader() {
+            const c = complaint;
+            document.getElementById('object-header').innerHTML = `
+                <a class="object-header__back" href="/complaints.html">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"/>
+                    </svg>
+                    Back to Complaints
+                </a>
+                <div class="object-header__top">
+                    <div>
+                        <div class="object-header__id">
+                            ${c.ticketNumber || 'TKT-' + c.id}
+                            ${severityBadge(c.severity)}
+                            ${statusBadge(c.status)}
+                        </div>
+                        <div class="object-header__title">${escapeHtml(c.title || 'Untitled Complaint')}</div>
+                        <div class="object-header__meta">
+                            Reported via ${channelLabel(c.channel)} &middot; ${timeAgo(c.createdAt)}
+                        </div>
+                    </div>
+                    <div class="object-header__actions">
+                        <button class="btn btn-secondary" onclick="openReassignDrawer()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                            </svg>
+                            Reassign
+                        </button>
+                        <button class="btn btn-danger" onclick="escalateComplaint()" ${c.status === 'ESCALATED' ? 'disabled' : ''}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                            Escalate
+                        </button>
+                    </div>
+                </div>
+                <div class="object-header__attrs">
+                    <div class="object-attr">
+                        <div class="object-attr__label">Product</div>
+                        <div class="object-attr__value">${productLabel(c.productType)}</div>
+                    </div>
+                    <div class="object-attr">
+                        <div class="object-attr__label">Assigned Agent</div>
+                        <div class="object-attr__value">${c.assignedAgent ? escapeHtml(c.assignedAgent.name) : '<span class="text-muted">Unassigned</span>'}</div>
+                    </div>
+                    <div class="object-attr">
+                        <div class="object-attr__label">Customer</div>
+                        <div class="object-attr__value">${c.customer ? escapeHtml(c.customer.fullName) : 'Unknown'}</div>
+                    </div>
+                    <div class="object-attr">
+                        <div class="object-attr__label">Created</div>
+                        <div class="object-attr__value">${formatDate(c.createdAt)}</div>
+                    </div>
+                    <div class="object-attr">
+                        <div class="object-attr__label">SLA Deadline</div>
+                        <div class="object-attr__value">${formatDate(c.slaDeadline)}</div>
+                    </div>
+                </div>
+            `;
+        }
 
-function switchTab(t) { currentTab = t; render(); }
+        // Render SLA bar
+        function renderSlaBar() {
+            const c = complaint;
+            if (!c.createdAt || !c.slaDeadline) {
+                document.getElementById('sla-bar').innerHTML = '';
+                return;
+            }
+            document.getElementById('sla-bar').innerHTML = renderSlaBar(c.createdAt, c.slaDeadline);
+        }
 
-async function loadAgentsForDropdown() {
-    let sel = document.getElementById('new-agent');
-    if (!sel) return;
-    try {
-        let res = await api.getAgents();
-        sel.innerHTML = '<option value="">Select Agent...</option>' + res.map(a => '<option value="'+a.id+'">'+a.name+' ('+a.role+')</option>').join('');
-    } catch(e) { sel.innerHTML = '<option value="">Error loading</option>'; }
-}
+        // Switch tab
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(function(btn) {
+                btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
+            });
+            renderTabContent();
+        }
 
-async function updateStatus() {
-    let s = document.getElementById('new-status').value;
-    let n = document.getElementById('status-note').value;
-    try {
-        complaint = await api.updateStatus(compId, s, n);
-        showToast('Status updated');
-        render();
-    } catch(e) { showToast(e.message, 'error'); }
-}
+        // Render tab content
+        function renderTabContent() {
+            const container = document.getElementById('tab-content');
+            const c = complaint;
 
-async function assignAgent() {
-    let aid = document.getElementById('new-agent').value;
-    if(!aid) return showToast('Select an agent', 'error');
-    try {
-        complaint = await api.assignAgent(compId, aid);
-        showToast('Agent assigned');
-        render();
-    } catch(e) { showToast(e.message, 'error'); }
-}
+            switch (currentTab) {
+                case 'details':
+                    container.innerHTML = renderDetailsTab();
+                    break;
+                case 'communication':
+                    container.innerHTML = renderCommunicationTab();
+                    break;
+                case 'actions':
+                    container.innerHTML = renderActionsTab();
+                    break;
+                case 'sla':
+                    container.innerHTML = renderSlaTab();
+                    break;
+                case 'customer':
+                    container.innerHTML = renderCustomerTab();
+                    break;
+            }
+        }
 
-async function addReply() {
-    let txt = document.getElementById('reply-text').value;
-    let internal = document.getElementById('reply-internal').checked;
-    if(!txt.trim()) return;
-    try {
-        await api.addComment(compId, txt, 'A. Supervisor', 'SUPERVISOR', internal);
-        document.getElementById('reply-text').value = '';
-        complaint = await api.getComplaint(compId); // Reload to get new comment
-        render();
-        showToast('Reply added');
-    } catch(e) { showToast(e.message, 'error'); }
-}
+        // Details tab
+        function renderDetailsTab() {
+            const c = complaint;
+            return `
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-header__title">Description</span>
+                        </div>
+                        <div class="card-body">
+                            <p style="white-space:pre-wrap;line-height:1.7;color:var(--color-text);">${escapeHtml(c.description || 'No description provided.')}</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-header__title">AI Classification</span>
+                            <button class="btn btn-ghost btn-sm" onclick="runAiClassification()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="1 4 1 10 7 10"/>
+                                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                                </svg>
+                                Run Analysis
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <ul class="info-list">
+                                <li class="info-row">
+                                    <span class="info-label">Issue Type</span>
+                                    <span class="info-value">${c.issueType ? c.issueType.replace(/_/g, ' ') : '<span class="text-muted">Pending</span>'}</span>
+                                </li>
+                                <li class="info-row">
+                                    <span class="info-label">Sentiment</span>
+                                    <span class="info-value">${c.sentimentLabel ? sentimentBadge(c.sentimentLabel) : '<span class="text-muted">Pending</span>'}</span>
+                                </li>
+                                <li class="info-row">
+                                    <span class="info-label">Confidence</span>
+                                    <span class="info-value font-mono">${c.aiConfidence ? (c.aiConfidence * 100).toFixed(0) + '%' : '-'}</span>
+                                </li>
+                            </ul>
+                            ${c.aiSuggestedResponse ? `
+                                <div style="margin-top:16px;padding:16px;background:var(--color-success-bg);border-radius:var(--radius-sm);border-left:3px solid var(--color-success);">
+                                    <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--color-success);margin-bottom:8px;">AI Suggested Response</div>
+                                    <p style="font-size:13px;line-height:1.6;color:var(--color-text);">${escapeHtml(c.aiSuggestedResponse)}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-async function runAi() {
-    showToast('Running AI Analysis...');
-    try {
-        complaint = await api.classifyComplaint(compId);
-        showToast('Analysis complete', 'success');
-        render();
-    } catch(e) { showToast(e.message, 'error'); }
-}
+        // Communication tab
+        function renderCommunicationTab() {
+            const c = complaint;
+            const comments = c.comments || [];
 
-loadDetail();
-</script>
+            const timelineHtml = comments.length ? comments.map(function(cm) {
+                const initials = getInitials(cm.authorName);
+                const avatarClass = cm.authorRole === 'SYSTEM' ? 'system' : (cm.authorRole === 'CUSTOMER' ? 'customer' : '');
+                const contentClass = cm.isInternal ? 'internal' : 'external';
+                return `
+                    <div class="timeline-item">
+                        <div class="timeline-avatar ${avatarClass}">${initials}</div>
+                        <div class="timeline-content ${contentClass}">
+                            <div class="timeline-meta">
+                                <span class="actor">${escapeHtml(cm.authorName)} ${cm.isInternal ? '<span class="badge badge-p2" style="margin-left:6px;">Internal</span>' : ''}</span>
+                                <span class="timeline-time">${timeAgo(cm.createdAt)}</span>
+                            </div>
+                            <div class="timeline-text">${escapeHtml(cm.content)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('') : '<div class="empty-state" style="padding:40px;"><p class="empty-text">No communication history yet</p></div>';
+
+            return `
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-header__title">Communication Timeline</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline" style="margin-bottom:24px;">
+                            ${timelineHtml}
+                        </div>
+                        
+                        <div style="border-top:1px solid var(--color-border);padding-top:20px;">
+                            <div style="font-size:14px;font-weight:600;margin-bottom:12px;">Add Comment</div>
+                            <div class="form-group">
+                                <textarea id="comment-text" class="form-control" rows="3" placeholder="Type your message here..."></textarea>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:16px;">
+                                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                    <input type="checkbox" id="comment-internal">
+                                    Internal note only (not visible to customer)
+                                </label>
+                                <button class="btn btn-primary" onclick="addComment()">Send Comment</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Actions tab
+        function renderActionsTab() {
+            const c = complaint;
+            return `
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-header__title">Change Status</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>New Status</label>
+                                <select id="new-status" class="form-control">
+                                    <option value="OPEN" ${c.status === 'OPEN' ? 'selected' : ''}>Open</option>
+                                    <option value="IN_PROGRESS" ${c.status === 'IN_PROGRESS' ? 'selected' : ''}>In Progress</option>
+                                    <option value="RESOLVED" ${c.status === 'RESOLVED' ? 'selected' : ''}>Resolved</option>
+                                    <option value="ESCALATED" ${c.status === 'ESCALATED' ? 'selected' : ''}>Escalated</option>
+                                    <option value="CLOSED" ${c.status === 'CLOSED' ? 'selected' : ''}>Closed</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Internal Note (optional)</label>
+                                <textarea id="status-note" class="form-control" rows="2" placeholder="Add a note about this status change..."></textarea>
+                            </div>
+                            <button class="btn btn-primary" onclick="updateStatus()">Update Status</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-header__title">Quick Actions</span>
+                        </div>
+                        <div class="card-body">
+                            <div style="display:flex;flex-direction:column;gap:12px;">
+                                <button class="btn btn-secondary" onclick="openReassignDrawer()" style="justify-content:flex-start;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                    </svg>
+                                    Reassign to Another Agent
+                                </button>
+                                <button class="btn btn-danger" onclick="escalateComplaint()" style="justify-content:flex-start;" ${c.status === 'ESCALATED' ? 'disabled' : ''}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                    </svg>
+                                    Escalate to Supervisor
+                                </button>
+                                <button class="btn btn-ghost" onclick="runAiClassification()" style="justify-content:flex-start;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <line x1="2" y1="12" x2="22" y2="12"/>
+                                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                                    </svg>
+                                    Run AI Analysis
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // SLA tab
+        function renderSlaTab() {
+            const c = complaint;
+            const sla = c.slaStatus || {};
+            
+            const now = new Date();
+            const created = new Date(c.createdAt);
+            const deadline = new Date(c.slaDeadline);
+            const total = deadline - created;
+            const elapsed = now - created;
+            const pct = Math.min(100, Math.max(0, (elapsed / total) * 100));
+
+            return `
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-header__title">SLA Information</span>
+                        ${slaBadge(sla)}
+                    </div>
+                    <div class="card-body">
+                        <div class="grid-2" style="margin-bottom:24px;">
+                            <ul class="info-list">
+                                <li class="info-row">
+                                    <span class="info-label">Created At</span>
+                                    <span class="info-value font-mono">${formatDate(c.createdAt)}</span>
+                                </li>
+                                <li class="info-row">
+                                    <span class="info-label">SLA Deadline</span>
+                                    <span class="info-value font-mono" style="font-weight:700;">${formatDate(c.slaDeadline)}</span>
+                                </li>
+                                <li class="info-row">
+                                    <span class="info-label">Time Remaining</span>
+                                    <span class="info-value font-mono ${deadline < now ? 'text-danger' : ''}">${deadline > now ? formatCountdown(deadline - now) : 'Overdue by ' + formatCountdown(now - deadline)}</span>
+                                </li>
+                            </ul>
+                            <ul class="info-list">
+                                <li class="info-row">
+                                    <span class="info-label">Severity</span>
+                                    <span class="info-value">${severityBadge(c.severity)}</span>
+                                </li>
+                                <li class="info-row">
+                                    <span class="info-label">SLA Rule Applied</span>
+                                    <span class="info-value">${c.severity} - ${c.severity === 'P1' ? '4 hours' : c.severity === 'P2' ? '8 hours' : c.severity === 'P3' ? '24 hours' : '48 hours'}</span>
+                                </li>
+                                <li class="info-row">
+                                    <span class="info-label">Current Status</span>
+                                    <span class="info-value">${statusBadge(c.status)}</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div style="margin-bottom:16px;">
+                            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px;">
+                                <span class="text-muted">Time Elapsed</span>
+                                <span class="font-mono" style="font-weight:600;">${Math.round(pct)}%</span>
+                            </div>
+                            <div style="height:12px;background:var(--color-border);border-radius:6px;overflow:hidden;">
+                                <div style="height:100%;width:${pct}%;background:${pct > 90 ? 'var(--color-danger)' : pct > 75 ? 'var(--color-warning)' : 'var(--color-success)'};border-radius:6px;transition:width 600ms ease;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Customer tab
+        function renderCustomerTab() {
+            const c = complaint;
+            const cust = c.customer || {};
+
+            return `
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-header__title">Customer Profile</span>
+                        </div>
+                        <div class="card-body">
+                            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                                <div class="agent-avatar" style="width:56px;height:56px;font-size:20px;">${getInitials(cust.fullName)}</div>
+                                <div>
+                                    <div style="font-size:16px;font-weight:600;">${escapeHtml(cust.fullName || 'Unknown')}</div>
+                                    <div class="text-muted" style="font-size:13px;">Customer #${cust.customerNumber || 'N/A'}</div>
+                                </div>
+                            </div>
+                            <ul class="info-list">
+                                <li class="info-row">
+                                    <span class="info-label">Email</span>
+                                    <span class="info-value">${escapeHtml(cust.email || '-')}</span>
+                                </li>
+                                <li class="info-row">
+                                    <span class="info-label">Phone</span>
+                                    <span class="info-value font-mono">${escapeHtml(cust.phone || '-')}</span>
+                                </li>
+                                <li class="info-row">
+                                    <span class="info-label">Account Number</span>
+                                    <span class="info-value font-mono">${escapeHtml(cust.accountNumber || '-')}</span>
+                                </li>
+                            </ul>
+                            <a href="/customers.html" class="btn btn-secondary" style="width:100%;margin-top:16px;">View Full Customer Profile</a>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-header__title">Contact Information</span>
+                        </div>
+                        <div class="card-body">
+                            <div style="display:flex;flex-direction:column;gap:12px;">
+                                <a href="mailto:${cust.email || ''}" class="btn btn-secondary" style="justify-content:flex-start;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                        <polyline points="22,6 12,13 2,6"/>
+                                    </svg>
+                                    Send Email
+                                </a>
+                                <a href="tel:${cust.phone || ''}" class="btn btn-secondary" style="justify-content:flex-start;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                    </svg>
+                                    Call Customer
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Action handlers
+        async function updateStatus() {
+            const status = document.getElementById('new-status').value;
+            const note = document.getElementById('status-note').value;
+
+            try {
+                complaint = await api.updateStatus(complaintId, status, note);
+                showToast('Status updated successfully', 'success');
+                renderObjectHeader();
+                renderTabContent();
+            } catch (err) {
+                showToast('Failed to update status: ' + err.message, 'error');
+            }
+        }
+
+        async function escalateComplaint() {
+            try {
+                complaint = await api.escalateComplaint(complaintId);
+                showToast('Complaint escalated', 'success');
+                renderObjectHeader();
+                renderTabContent();
+            } catch (err) {
+                showToast('Failed to escalate: ' + err.message, 'error');
+            }
+        }
+
+        async function addComment() {
+            const text = document.getElementById('comment-text').value.trim();
+            const isInternal = document.getElementById('comment-internal').checked;
+
+            if (!text) {
+                showToast('Please enter a comment', 'warning');
+                return;
+            }
+
+            try {
+                await api.addComment(complaintId, text, 'Admin User', 'SUPERVISOR', isInternal);
+                complaint = await api.getComplaint(complaintId);
+                showToast('Comment added', 'success');
+                document.getElementById('comment-text').value = '';
+                document.getElementById('comment-internal').checked = false;
+                renderTabContent();
+            } catch (err) {
+                showToast('Failed to add comment: ' + err.message, 'error');
+            }
+        }
+
+        async function runAiClassification() {
+            showToast('Running AI analysis...', 'info');
+            try {
+                complaint = await api.classifyComplaint(complaintId);
+                showToast('AI analysis complete', 'success');
+                renderTabContent();
+            } catch (err) {
+                showToast('AI analysis failed: ' + err.message, 'error');
+            }
+        }
+
+        async function openReassignDrawer() {
+            openDrawer('agent-drawer');
+            const body = document.getElementById('agent-drawer-body');
+            body.innerHTML = '<div class="loading"><div class="spinner"></div> Loading agents...</div>';
+
+            try {
+                const agents = await api.getAgents();
+                body.innerHTML = `
+                    <div class="form-group">
+                        <label>Select Agent</label>
+                        <select id="reassign-agent" class="form-control">
+                            <option value="">Choose an agent...</option>
+                            ${agents.map(a => `<option value="${a.id}" ${complaint.assignedAgent && complaint.assignedAgent.id === a.id ? 'selected' : ''}>${escapeHtml(a.name)} (${a.role})</option>`).join('')}
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" style="width:100%;" onclick="reassignAgent()">Reassign Agent</button>
+                `;
+            } catch (err) {
+                body.innerHTML = '<div class="empty-state"><p class="empty-text">Failed to load agents</p></div>';
+            }
+        }
+
+        async function reassignAgent() {
+            const agentId = document.getElementById('reassign-agent').value;
+            if (!agentId) {
+                showToast('Please select an agent', 'warning');
+                return;
+            }
+
+            try {
+                complaint = await api.assignAgent(complaintId, agentId);
+                showToast('Agent reassigned', 'success');
+                closeDrawer('agent-drawer');
+                renderObjectHeader();
+            } catch (err) {
+                showToast('Failed to reassign: ' + err.message, 'error');
+            }
+        }
+
+        // Initial load
+        loadComplaint();
+    </script>
 </body>
 </html>
