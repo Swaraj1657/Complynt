@@ -1,70 +1,301 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SLA Monitor — ComplaintHub</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLA Monitor — Complynt</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<div class="main">
-    <div class="page-header">
-        <div class="page-header-left"><h1>SLA Monitor</h1><p>Track SLA breaches, at-risk complaints, and escalation rules</p></div>
-    </div>
-    <div class="page-body" id="sla-body">
-        <div class="loading"><div class="spinner"></div>Loading SLA data...</div>
-    </div>
-</div>
-<script src="/js/api.js"></script>
-<script src="/js/common.js"></script>
-<script>
-initLayout('sla');
+    <!-- Shell Bar injected by common.js -->
+    <div id="shell-bar"></div>
 
-async function loadSla() {
-    const el = document.getElementById('sla-body');
-    try {
-        const [breached, rules] = await Promise.all([api.getBreached(), api.getSlaRules()]);
+    <!-- Left Nav injected by common.js -->
+    <nav id="left-nav-container"></nav>
 
-        el.innerHTML = `
-        <div class="tile-grid mb-24">
-            <div class="tile tile-negative">
-                <div class="tile-label">SLA Breached</div>
-                <div class="tile-value">${breached.length}</div>
-                <div class="tile-sub">Overdue complaints</div>
+    <!-- Main Content -->
+    <main class="app-layout" id="main-content">
+        <div class="page-header">
+            <div class="page-header__left">
+                <h1 class="page-header__title">SLA Monitor</h1>
+                <p class="page-header__subtitle">Track SLA breaches, at-risk complaints, and escalation rules</p>
+            </div>
+            <div class="page-header__actions">
+                <button class="btn btn-secondary" onclick="openDrawer('rules-drawer')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                    Configure Rules
+                </button>
             </div>
         </div>
 
-        <!-- Breached Complaints -->
-        <div class="card mb-24">
-            <div class="card-header"><h3>Breached & At-Risk Complaints</h3></div>
-            ${breached.length ? '<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Ticket</th><th>Title</th><th>Severity</th><th>Status</th><th>SLA</th><th>Created</th></tr></thead><tbody>' +
-            breached.map(c => '<tr onclick="location.href=\'/complaint-detail.html?id='+c.id+'\'" style="cursor:pointer">' +
-                '<td class="ticket-link">'+(c.ticketNumber||'—')+'</td>' +
-                '<td>'+c.title+'</td>' +
-                '<td>'+severityBadge(c.severity)+'</td>' +
-                '<td>'+statusBadge(c.status)+'</td>' +
-                '<td>'+slaBadge(c.slaStatus)+'</td>' +
-                '<td style="font-size:12px">'+formatDateShort(c.createdAt)+'</td></tr>').join('') +
-            '</tbody></table></div>' :
-            '<div class="card-body"><div class="empty-state"><p class="empty-text">No SLA breaches! All complaints are on track.</p></div></div>'}
+        <!-- KPI Tiles -->
+        <div class="kpi-grid" id="kpi-tiles">
+            <div class="kpi-tile skeleton" style="height: 120px;"></div>
+            <div class="kpi-tile skeleton" style="height: 120px;"></div>
+            <div class="kpi-tile skeleton" style="height: 120px;"></div>
         </div>
 
-        <!-- SLA Rules -->
-        <div class="card">
-            <div class="card-header"><h3>SLA Configuration Rules</h3></div>
-            <div style="overflow-x:auto">
-                <table class="data-table">
-                    <thead><tr><th>Rule ID</th><th>Severity Trigger</th><th>SLA Hours</th><th>Warning %</th><th>Product Area</th></tr></thead>
-                    <tbody>
-                        ${rules.map(r => '<tr><td>Rule #'+r.id+'</td><td><span class="badge badge-'+(r.severity||'').toLowerCase()+'">'+(r.severity||'—')+'</span></td><td style="font-weight:700">'+r.slaHours+' hrs</td><td>'+r.warnAtPercent+'%</td><td>'+(r.productType?productLabel(r.productType):'<span style="color:var(--text-light)">Global (All Products)</span>')+'</td></tr>').join('')}
-                    </tbody>
-                </table>
+        <!-- Tab Strip -->
+        <div class="tab-strip" id="sla-tabs">
+            <button class="tab-btn active" data-tab="breached" onclick="switchSlaTab('breached')">
+                Breached
+                <span id="breached-count" class="badge badge-sm badge-p1" style="margin-left: 6px;">0</span>
+            </button>
+            <button class="tab-btn" data-tab="at-risk" onclick="switchSlaTab('at-risk')">
+                At Risk
+            </button>
+            <button class="tab-btn" data-tab="on-track" onclick="switchSlaTab('on-track')">
+                On Track
+            </button>
+        </div>
+
+        <!-- Breached Tab -->
+        <div class="tab-content active" id="tab-breached">
+            <div class="card">
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Title</th>
+                                <th>Severity</th>
+                                <th>Status</th>
+                                <th>SLA</th>
+                                <th>Overdue By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="breached-tbody">
+                            <tr><td colspan="7"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>`;
-    } catch(err) {
-        el.innerHTML = '<div class="empty-state"><p>Error: '+err.message+'</p></div>';
-    }
-}
-loadSla();
-</script>
+        </div>
+
+        <!-- At Risk Tab -->
+        <div class="tab-content" id="tab-at-risk">
+            <div class="card">
+                <div class="card-body">
+                    <div class="empty-state">
+                        <p class="empty-text">At-risk complaints</p>
+                        <p class="empty-sub">Complaints approaching their SLA deadline will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- On Track Tab -->
+        <div class="tab-content" id="tab-on-track">
+            <div class="card">
+                <div class="card-body">
+                    <div class="empty-state">
+                        <p class="empty-text">On-track complaints</p>
+                        <p class="empty-sub">Complaints within SLA will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Rules Drawer -->
+    <div class="drawer-overlay" id="rules-drawer-overlay" onclick="closeDrawer('rules-drawer')"></div>
+    <div class="drawer" id="rules-drawer">
+        <div class="drawer-header">
+            <span class="drawer-header__title">SLA Configuration Rules</span>
+            <button class="drawer-close" onclick="closeDrawer('rules-drawer')">&times;</button>
+        </div>
+        <div class="drawer-body" id="rules-content">
+            <div class="loading"><div class="spinner"></div>Loading rules...</div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="/js/config.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        // Initialize layout
+        initLayout('sla');
+
+        let breachedComplaints = [];
+        let slaRules = [];
+        let currentTab = 'breached';
+
+        async function loadSlaData() {
+            try {
+                const [breached, rules] = await Promise.all([
+                    getBreachedComplaints(),
+                    getSlaRules()
+                ]);
+
+                breachedComplaints = breached || [];
+                slaRules = rules || [];
+
+                renderKPIs();
+                renderBreachedTable();
+                updateRulesDrawer();
+
+            } catch (err) {
+                showToast('Failed to load SLA data: ' + err.message, 'error');
+            }
+        }
+
+        function renderKPIs() {
+            const kpiTiles = document.getElementById('kpi-tiles');
+            kpiTiles.innerHTML = `
+                <div class="kpi-tile kpi-tile--danger">
+                    <div class="kpi-tile__label">SLA Breached</div>
+                    <div class="kpi-tile__value">${breachedComplaints.length}</div>
+                    <div class="kpi-tile__sub">Overdue complaints</div>
+                </div>
+                <div class="kpi-tile kpi-tile--warning">
+                    <div class="kpi-tile__label">At Risk</div>
+                    <div class="kpi-tile__value">0</div>
+                    <div class="kpi-tile__sub">Approaching deadline</div>
+                </div>
+                <div class="kpi-tile kpi-tile--success">
+                    <div class="kpi-tile__label">On Track</div>
+                    <div class="kpi-tile__value">--</div>
+                    <div class="kpi-tile__sub">Within SLA</div>
+                </div>
+            `;
+
+            // Update badge count
+            document.getElementById('breached-count').textContent = breachedComplaints.length;
+        }
+
+        function renderBreachedTable() {
+            const tbody = document.getElementById('breached-tbody');
+
+            if (!breachedComplaints.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state" style="padding: 40px;">
+                                <p class="empty-text">No SLA breaches!</p>
+                                <p class="empty-sub">All complaints are currently on track. Great work!</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = breachedComplaints.map(c => {
+                const deadline = c.slaDeadline ? new Date(c.slaDeadline) : null;
+                const now = new Date();
+                const overdueMs = deadline ? now - deadline : 0;
+                const overdueText = overdueMs > 0 ? formatOverdue(overdueMs) : '\u2014';
+
+                return `
+                    <tr style="border-left: 3px solid var(--color-danger);">
+                        <td><span class="id-cell" onclick="window.location.href='/complaint-detail.html?id=${c.id}'">${c.ticketNumber || '\u2014'}</span></td>
+                        <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.title || '\u2014'}</td>
+                        <td>${severityBadge(c.severity)}</td>
+                        <td>${statusBadge(c.status)}</td>
+                        <td>${slaBadge(c.slaStatus)}</td>
+                        <td class="mono" style="color: var(--color-danger); font-weight: 600;">${overdueText}</td>
+                        <td>
+                            <button class="btn btn-xs btn-danger" onclick="escalateFromSla(${c.id}, event)">
+                                Escalate
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function formatOverdue(ms) {
+            const hours = Math.floor(ms / (1000 * 60 * 60));
+            if (hours >= 24) {
+                return Math.floor(hours / 24) + 'd ' + (hours % 24) + 'h';
+            }
+            return hours + 'h ' + Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60)) + 'm';
+        }
+
+        function updateRulesDrawer() {
+            const content = document.getElementById('rules-content');
+
+            if (!slaRules.length) {
+                content.innerHTML = `
+                    <div class="empty-state" style="padding: 40px;">
+                        <p class="empty-text">No SLA rules configured</p>
+                        <p class="empty-sub">Default SLA rules will be applied</p>
+                    </div>
+                `;
+                return;
+            }
+
+            content.innerHTML = `
+                <p style="font-size: 13px; color: var(--color-text-muted); margin-bottom: 20px;">
+                    SLA rules determine the resolution deadline based on complaint severity and product type.
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${slaRules.map(rule => `
+                        <div style="padding: 14px; background: var(--color-bg); border-radius: var(--radius-sm); border-left: 3px solid ${SEVERITY_COLORS[rule.severity] || 'var(--color-border)'};">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-weight: 600;">Rule #${rule.id}</span>
+                                ${severityBadge(rule.severity)}
+                            </div>
+                            <ul class="info-list" style="font-size: 12px;">
+                                <li class="info-row">
+                                    <span class="info-label">SLA Hours</span>
+                                    <span class="info-value mono">${rule.slaHours} hrs</span>
+                                </li>
+                                <li class="info-row">
+                                    <span class="info-label">Warning At</span>
+                                    <span class="info-value">${rule.warnAtPercent}%</span>
+                                </li>
+                                <li class="info-row">
+                                    <span class="info-label">Product</span>
+                                    <span class="info-value">${rule.productType ? productLabel(rule.productType) : 'All Products'}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function switchSlaTab(tabName) {
+            currentTab = tabName;
+
+            // Update tab buttons
+            document.querySelectorAll('#sla-tabs .tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabName);
+            });
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.toggle('active', content.id === 'tab-' + tabName);
+            });
+        }
+
+        async function escalateFromSla(complaintId, event) {
+            event.stopPropagation();
+
+            if (!confirm('Escalate this complaint to a supervisor?')) {
+                return;
+            }
+
+            try {
+                await updateComplaintStatus(complaintId, 'ESCALATED', 'Escalated due to SLA breach');
+                showToast('Complaint escalated successfully', 'success');
+                loadSlaData(); // Refresh data
+            } catch (err) {
+                showToast('Failed to escalate: ' + err.message, 'error');
+            }
+        }
+
+        // Initial load
+        loadSlaData();
+    </script>
 </body>
 </html>

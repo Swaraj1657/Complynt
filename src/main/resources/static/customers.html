@@ -1,84 +1,304 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer 360° — ComplaintHub</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer 360 — Complynt</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        .cust-grid { display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: start; }
-        @media(max-width:900px){ .cust-grid{grid-template-columns:1fr;} }
+        .customer-layout {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        @media (max-width: 1024px) {
+            .customer-layout { grid-template-columns: 1fr; }
+        }
+        .customer-list {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        .customer-list-item {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--color-border-light);
+            cursor: pointer;
+            transition: var(--ease);
+        }
+        .customer-list-item:hover {
+            background: var(--color-bg);
+        }
+        .customer-list-item.selected {
+            background: var(--color-primary-light);
+            border-left: 3px solid var(--color-primary);
+        }
+        .customer-list-item__name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .customer-list-item__email {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            margin-top: 2px;
+        }
     </style>
 </head>
 <body>
-<div class="main">
-    <div class="page-header">
-        <div class="page-header-left"><h1>Customer 360° View</h1><p>Unified customer profiles and complaint history</p></div>
-    </div>
-    <div class="page-body" id="customer-body">
-        <div class="loading"><div class="spinner"></div>Loading customers...</div>
-    </div>
-</div>
-<script src="/js/api.js"></script>
-<script src="/js/common.js"></script>
-<script>
-initLayout('customers');
+    <!-- Shell Bar injected by common.js -->
+    <div id="shell-bar"></div>
 
-async function loadCustomers() {
-    const el = document.getElementById('customer-body');
-    try {
-        const res = await api.getCustomers();
-        el.innerHTML = 
-        '<div class="card"><div class="card-header"><h3>Customer Directory</h3></div>' +
-        '<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Customer #</th><th>Customer Name</th><th>Email Address</th><th>Phone Number</th><th>Account Linking</th></tr></thead><tbody>' +
-        res.map(c => '<tr onclick="viewCustomer('+c.id+')" style="cursor:pointer"><td><strong>'+c.customerNumber+'</strong></td><td>'+c.fullName+'</td><td>'+c.email+'</td><td>'+c.phone+'</td><td>'+(c.accountNumber||'<span style="color:var(--text-light)">Unlinked</span>')+'</td></tr>').join('') +
-        '</tbody></table></div></div>';
-    } catch(err) {
-        el.innerHTML = '<div class="empty-state"><p>Error: '+err.message+'</p></div>';
-    }
-}
+    <!-- Left Nav injected by common.js -->
+    <nav id="left-nav-container"></nav>
 
-async function viewCustomer(id) {
-    const el = document.getElementById('customer-body');
-    el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading profile...</div>';
-    try {
-        const cust = await api.getCustomer(id);
-        const complaints = await api.getCustomerComplaints(id);
+    <!-- Main Content -->
+    <main class="app-layout" id="main-content">
+        <div class="page-header">
+            <div class="page-header__left">
+                <h1 class="page-header__title">Customer 360</h1>
+                <p class="page-header__subtitle">Unified customer profiles and complaint history</p>
+            </div>
+        </div>
 
-        let tableHtml = complaints.length ? 
-            '<table class="data-table"><thead><tr><th>Ticket</th><th>Title</th><th>Product</th><th>Severity</th><th>Status</th><th>Date</th></tr></thead><tbody>' +
-            complaints.map(c => '<tr onclick="location.href=\'/complaint-detail.html?id='+c.id+'\'" style="cursor:pointer">' +
-                '<td class="ticket-link">'+(c.ticketNumber||'—')+'</td><td>'+c.title+'</td><td>'+productLabel(c.productType)+'</td><td>'+severityBadge(c.severity)+'</td><td>'+statusBadge(c.status)+'</td><td style="font-size:12px">'+formatDateShort(c.createdAt)+'</td></tr>').join('') +
-            '</tbody></table>' : '<div class="empty-state" style="padding:40px"><p class="empty-text">No complaint history found.</p></div>';
+        <div class="customer-layout">
+            <!-- Customer List -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Customers</h3>
+                </div>
+                <div style="padding: 12px; border-bottom: 1px solid var(--color-border-light);">
+                    <input type="text" class="form-control" id="customer-search" placeholder="Search customers..." oninput="debounceSearch()">
+                </div>
+                <div class="customer-list" id="customer-list">
+                    <div class="loading"><div class="spinner"></div>Loading...</div>
+                </div>
+            </div>
 
-        el.innerHTML = 
-        '<button class="btn btn-ghost mb-24" onclick="loadCustomers()">← Back to Directory</button>' +
-        '<div class="cust-grid">' +
-            '<div class="card">' +
-                '<div class="card-header" style="text-align:center;padding:32px 20px;">' +
-                    '<div style="width:80px;height:80px;background:var(--primary-light);color:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;margin:0 auto 16px;">'+cust.fullName.charAt(0)+'</div>' +
-                    '<h2 style="font-size:20px;margin-bottom:4px;color:var(--text);">'+cust.fullName+'</h2>' +
-                    '<div style="color:var(--text-sec);font-size:14px;">'+cust.customerNumber+'</div>' +
-                '</div>' +
-                '<div class="card-body">' +
-                    '<ul class="info-list">' +
-                        '<li class="info-row"><span class="info-label">Email</span><span class="info-value" style="word-break:break-all;">'+cust.email+'</span></li>' +
-                        '<li class="info-row"><span class="info-label">Phone</span><span class="info-value">'+cust.phone+'</span></li>' +
-                        '<li class="info-row"><span class="info-label">Account #</span><span class="info-value">'+(cust.accountNumber||'—')+'</span></li>' +
-                        '<li class="info-row"><span class="info-label">Total Complaints</span><span class="info-value" style="font-weight:700;">'+complaints.length+'</span></li>' +
-                    '</ul>' +
-                '</div>' +
-            '</div>' +
-            '<div class="card">' +
-                '<div class="card-header" style="justify-content:space-between;display:flex;"><h3>Complaint History</h3></div>' +
-                '<div style="overflow-x:auto">'+tableHtml+'</div>' +
-            '</div>' +
-        '</div>';
-    } catch(err) {
-        el.innerHTML = '<div class="empty-state"><p>Error: '+err.message+'</p></div>';
-    }
-}
+            <!-- Customer Profile -->
+            <div id="customer-profile-container">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="empty-state" style="padding: 60px 20px;">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.3; margin-bottom: 16px;">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                            <p class="empty-text">Select a customer</p>
+                            <p class="empty-sub">Choose a customer from the list to view their profile</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 
-loadCustomers();
-</script>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="/js/config.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        // Initialize layout
+        initLayout('customers');
+
+        let customers = [];
+        let selectedCustomerId = null;
+        let searchTimeout = null;
+
+        async function loadCustomers() {
+            const listEl = document.getElementById('customer-list');
+            listEl.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
+
+            try {
+                customers = await getCustomers();
+                renderCustomerList();
+            } catch (err) {
+                showToast('Failed to load customers: ' + err.message, 'error');
+                listEl.innerHTML = `
+                    <div class="empty-state" style="padding: 40px;">
+                        <p class="empty-text">Error loading customers</p>
+                        <button class="btn btn-primary mt-16" onclick="loadCustomers()">Retry</button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderCustomerList() {
+            const listEl = document.getElementById('customer-list');
+
+            if (!customers.length) {
+                listEl.innerHTML = `
+                    <div class="empty-state" style="padding: 40px;">
+                        <p class="empty-text">No customers found</p>
+                        <p class="empty-sub">Customers will appear here when they submit complaints</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = customers.map(c => `
+                <div class="customer-list-item ${selectedCustomerId === c.id ? 'selected' : ''}" onclick="selectCustomer(${c.id})">
+                    <div class="customer-list-item__name">${c.fullName}</div>
+                    <div class="customer-list-item__email">${c.email}</div>
+                </div>
+            `).join('');
+        }
+
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const searchTerm = document.getElementById('customer-search').value.toLowerCase();
+                const filtered = customers.filter(c => 
+                    c.fullName.toLowerCase().includes(searchTerm) ||
+                    c.email.toLowerCase().includes(searchTerm) ||
+                    (c.customerNumber && c.customerNumber.toLowerCase().includes(searchTerm))
+                );
+                renderFilteredList(filtered);
+            }, 300);
+        }
+
+        function renderFilteredList(filtered) {
+            const listEl = document.getElementById('customer-list');
+
+            if (!filtered.length) {
+                listEl.innerHTML = `
+                    <div class="empty-state" style="padding: 40px;">
+                        <p class="empty-text">No results</p>
+                        <p class="empty-sub">Try a different search term</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(c => `
+                <div class="customer-list-item ${selectedCustomerId === c.id ? 'selected' : ''}" onclick="selectCustomer(${c.id})">
+                    <div class="customer-list-item__name">${c.fullName}</div>
+                    <div class="customer-list-item__email">${c.email}</div>
+                </div>
+            `).join('');
+        }
+
+        async function selectCustomer(customerId) {
+            selectedCustomerId = customerId;
+            renderCustomerList();
+
+            const container = document.getElementById('customer-profile-container');
+            container.innerHTML = '<div class="card"><div class="card-body"><div class="loading"><div class="spinner"></div>Loading profile...</div></div></div>';
+
+            try {
+                const [customer, complaints] = await Promise.all([
+                    getCustomerById(customerId),
+                    getCustomerComplaints(customerId)
+                ]);
+
+                const complaintList = complaints.content || complaints || [];
+
+                container.innerHTML = `
+                    <div class="grid-7-3 mb-24">
+                        <div class="card">
+                            <div class="card-header"><h3>Profile Information</h3></div>
+                            <div class="card-body">
+                                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--color-border-light);">
+                                    <div class="agent-avatar" style="width: 80px; height: 80px; font-size: 28px;">${getInitials(customer.fullName)}</div>
+                                    <div>
+                                        <div style="font-size: 22px; font-weight: 700;">${customer.fullName}</div>
+                                        <div style="font-size: 14px; color: var(--color-text-muted); margin-top: 4px;">${customer.customerNumber || 'No customer ID'}</div>
+                                    </div>
+                                </div>
+                                <ul class="info-list">
+                                    <li class="info-row">
+                                        <span class="info-label">Email</span>
+                                        <span class="info-value">${customer.email || '\u2014'}</span>
+                                    </li>
+                                    <li class="info-row">
+                                        <span class="info-label">Phone</span>
+                                        <span class="info-value">${customer.phone || '\u2014'}</span>
+                                    </li>
+                                    <li class="info-row">
+                                        <span class="info-label">Account Number</span>
+                                        <span class="info-value mono">${customer.accountNumber || '\u2014'}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3>Quick Stats</h3></div>
+                            <div class="card-body">
+                                <div style="text-align: center; padding: 16px 0; border-bottom: 1px solid var(--color-border-light);">
+                                    <div style="font-family: var(--font-mono); font-size: 36px; font-weight: 600; color: var(--color-primary);">${complaintList.length}</div>
+                                    <div style="font-size: 11px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">Total Complaints</div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 16px; text-align: center;">
+                                    <div>
+                                        <div style="font-family: var(--font-mono); font-size: 20px; font-weight: 600; color: var(--color-warning);">${complaintList.filter(c => c.status === 'OPEN' || c.status === 'IN_PROGRESS').length}</div>
+                                        <div style="font-size: 10px; color: var(--color-text-muted); text-transform: uppercase;">Open</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-family: var(--font-mono); font-size: 20px; font-weight: 600; color: var(--color-success);">${complaintList.filter(c => c.status === 'RESOLVED' || c.status === 'CLOSED').length}</div>
+                                        <div style="font-size: 10px; color: var(--color-text-muted); text-transform: uppercase;">Resolved</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"><h3>Complaint History</h3></div>
+                        ${complaintList.length ? `
+                            <div style="overflow-x: auto;">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Ticket</th>
+                                            <th>Title</th>
+                                            <th>Product</th>
+                                            <th>Severity</th>
+                                            <th>Status</th>
+                                            <th>Created</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${complaintList.map(c => `
+                                            <tr onclick="window.location.href='/complaint-detail.html?id=${c.id}'">
+                                                <td><span class="id-cell">${c.ticketNumber || '\u2014'}</span></td>
+                                                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.title || '\u2014'}</td>
+                                                <td style="font-size: 12px;">${productLabel(c.productType)}</td>
+                                                <td>${severityBadge(c.severity)}</td>
+                                                <td>${statusBadge(c.status)}</td>
+                                                <td class="mono" style="font-size: 12px; color: var(--color-text-muted);">${formatDateShort(c.createdAt)}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : `
+                            <div class="card-body">
+                                <div class="empty-state" style="padding: 40px;">
+                                    <p class="empty-text">No complaint history</p>
+                                    <p class="empty-sub">This customer has not submitted any complaints yet</p>
+                                </div>
+                            </div>
+                        `}
+                    </div>
+                `;
+            } catch (err) {
+                showToast('Failed to load customer profile: ' + err.message, 'error');
+                container.innerHTML = `
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="empty-state">
+                                <p class="empty-text">Error loading profile</p>
+                                <p class="empty-sub">${err.message}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Initial load
+        loadCustomers();
+    </script>
 </body>
 </html>

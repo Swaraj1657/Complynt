@@ -1,47 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agents — ComplaintHub</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agents — Complynt</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<div class="main">
-    <div class="page-header">
-        <div class="page-header-left"><h1>Agent Directory</h1><p>Manage agent teams and workloads</p></div>
-    </div>
-    <div class="page-body" id="agents-body">
-        <div class="loading"><div class="spinner"></div>Loading agents...</div>
-    </div>
-</div>
-<script src="/js/api.js"></script>
-<script src="/js/common.js"></script>
-<script>
-initLayout('agents');
+    <!-- Shell Bar injected by common.js -->
+    <div id="shell-bar"></div>
 
-async function loadAgents() {
-    const el = document.getElementById('agents-body');
-    try {
-        const res = await api.getAgents();
-        
-        el.innerHTML = 
-        '<div class="tile-grid mb-24">' +
-            '<div class="tile tile-info"><div class="tile-label">Total Agents</div><div class="tile-value">'+res.length+'</div><div class="tile-sub">Active personnel</div></div>' +
-        '</div>' +
-        '<div class="card"><div class="card-header"><h3>Agent Personnel</h3></div>' +
-        '<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Agent ID</th><th>Name</th><th>Role</th><th>Email Address</th><th>Status</th><th>Workload</th></tr></thead><tbody>' +
-        res.map(a => '<tr><td><strong>AGT-'+a.id.toString().padStart(4,'0')+'</strong></td>' +
-            '<td><div style="display:flex;align-items:center;gap:12px;"><div style="width:28px;height:28px;background:var(--primary-light);color:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">'+a.name.charAt(0)+'</div>'+a.name+'</div></td>' +
-            '<td>'+a.role+'</td><td>'+a.email+'</td>' +
-            '<td><span class="badge badge-positive">Active</span></td>' +
-            '<td><a href="/complaints.html" style="color:var(--primary);text-decoration:none;font-size:13px;font-weight:600;">View Queue →</a></td></tr>').join('') +
-        '</tbody></table></div></div>';
-    } catch(err) {
-        el.innerHTML = '<div class="empty-state"><p>Error: '+err.message+'</p></div>';
-    }
-}
+    <!-- Left Nav injected by common.js -->
+    <nav id="left-nav-container"></nav>
 
-loadAgents();
-</script>
+    <!-- Main Content -->
+    <main class="app-layout" id="main-content">
+        <div class="page-header">
+            <div class="page-header__left">
+                <h1 class="page-header__title">Agent Directory</h1>
+                <p class="page-header__subtitle">Manage agent teams and workloads</p>
+            </div>
+        </div>
+
+        <!-- KPI Tiles -->
+        <div class="kpi-grid" id="kpi-tiles">
+            <div class="kpi-tile skeleton" style="height: 120px;"></div>
+            <div class="kpi-tile skeleton" style="height: 120px;"></div>
+            <div class="kpi-tile skeleton" style="height: 120px;"></div>
+        </div>
+
+        <!-- Agent Cards Grid -->
+        <div class="agent-grid" id="agents-grid">
+            <div class="card skeleton" style="height: 200px;"></div>
+            <div class="card skeleton" style="height: 200px;"></div>
+            <div class="card skeleton" style="height: 200px;"></div>
+        </div>
+    </main>
+
+    <!-- Agent Drawer -->
+    <div class="drawer-overlay" id="agent-drawer-overlay" onclick="closeDrawer('agent-drawer')"></div>
+    <div class="drawer" id="agent-drawer">
+        <div class="drawer-header">
+            <span class="drawer-header__title" id="drawer-agent-name">Agent Details</span>
+            <button class="drawer-close" onclick="closeDrawer('agent-drawer')">&times;</button>
+        </div>
+        <div class="drawer-body" id="agent-drawer-content">
+            <div class="loading"><div class="spinner"></div>Loading...</div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="/js/config.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        // Initialize layout
+        initLayout('agents');
+
+        let agents = [];
+
+        async function loadAgents() {
+            try {
+                agents = await getAgents();
+                renderKPIs();
+                renderAgentCards();
+            } catch (err) {
+                showToast('Failed to load agents: ' + err.message, 'error');
+                document.getElementById('agents-grid').innerHTML = `
+                    <div class="card" style="grid-column: 1 / -1;">
+                        <div class="card-body">
+                            <div class="empty-state">
+                                <p class="empty-text">Could not load agents</p>
+                                <p class="empty-sub">${err.message}</p>
+                                <button class="btn btn-primary mt-16" onclick="loadAgents()">Retry</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderKPIs() {
+            const kpiTiles = document.getElementById('kpi-tiles');
+            kpiTiles.innerHTML = `
+                <div class="kpi-tile">
+                    <div class="kpi-tile__label">Total Agents</div>
+                    <div class="kpi-tile__value">${agents.length}</div>
+                    <div class="kpi-tile__sub">Active personnel</div>
+                </div>
+                <div class="kpi-tile kpi-tile--success">
+                    <div class="kpi-tile__label">Online</div>
+                    <div class="kpi-tile__value">${agents.length}</div>
+                    <div class="kpi-tile__sub">Currently available</div>
+                </div>
+                <div class="kpi-tile kpi-tile--warning">
+                    <div class="kpi-tile__label">Avg. Workload</div>
+                    <div class="kpi-tile__value">--</div>
+                    <div class="kpi-tile__sub">Across all agents</div>
+                </div>
+            `;
+        }
+
+        function renderAgentCards() {
+            const grid = document.getElementById('agents-grid');
+
+            if (!agents.length) {
+                grid.innerHTML = `
+                    <div class="card" style="grid-column: 1 / -1;">
+                        <div class="card-body">
+                            <div class="empty-state">
+                                <p class="empty-text">No agents found</p>
+                                <p class="empty-sub">Add agents to your system to see them here</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = agents.map(agent => `
+                <div class="card agent-card">
+                    <div class="agent-header">
+                        <div class="agent-avatar">${getInitials(agent.name)}</div>
+                        <div class="agent-info">
+                            <div class="agent-name">${agent.name}</div>
+                            <div class="agent-role">${agent.role || 'Agent'}</div>
+                        </div>
+                        <div class="online-dot online" title="Online"></div>
+                    </div>
+                    <div class="agent-stats">
+                        <div>
+                            <div class="agent-stat__value">--</div>
+                            <div class="agent-stat__label">Active</div>
+                        </div>
+                        <div>
+                            <div class="agent-stat__value">--</div>
+                            <div class="agent-stat__label">Resolved</div>
+                        </div>
+                        <div>
+                            <div class="agent-stat__value">--%</div>
+                            <div class="agent-stat__label">Workload</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-ghost" style="width: 100%;" onclick="viewAgentDetails(${agent.id})">
+                        View Details
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function viewAgentDetails(agentId) {
+            const agent = agents.find(a => a.id === agentId);
+            if (!agent) return;
+
+            document.getElementById('drawer-agent-name').textContent = agent.name;
+            document.getElementById('agent-drawer-content').innerHTML = '<div class="loading"><div class="spinner"></div>Loading complaints...</div>';
+            openDrawer('agent-drawer');
+
+            try {
+                const complaints = await getAgentComplaints(agentId);
+                const list = complaints.content || [];
+
+                document.getElementById('agent-drawer-content').innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--color-border-light);">
+                        <div class="agent-avatar" style="width: 64px; height: 64px; font-size: 22px;">${getInitials(agent.name)}</div>
+                        <div>
+                            <div style="font-size: 18px; font-weight: 600;">${agent.name}</div>
+                            <div style="font-size: 13px; color: var(--color-text-muted);">${agent.role || 'Agent'}</div>
+                            <div style="font-size: 12px; color: var(--color-text-light); margin-top: 4px;">${agent.email}</div>
+                        </div>
+                    </div>
+
+                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Assigned Complaints (${list.length})</h4>
+
+                    ${list.length ? `
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${list.map(c => `
+                                <div style="padding: 12px; background: var(--color-bg); border-radius: var(--radius-sm); cursor: pointer;" onclick="window.location.href='/complaint-detail.html?id=${c.id}'">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span class="mono" style="color: var(--color-primary); font-weight: 600;">${c.ticketNumber || 'N/A'}</span>
+                                        ${statusBadge(c.status)}
+                                    </div>
+                                    <div style="font-size: 13px; margin-top: 6px; color: var(--color-text);">${c.title || 'No title'}</div>
+                                    <div style="font-size: 11px; margin-top: 4px; color: var(--color-text-muted);">${formatDateShort(c.createdAt)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div class="empty-state" style="padding: 30px;">
+                            <p class="empty-text">No complaints assigned</p>
+                            <p class="empty-sub">This agent has no active complaints</p>
+                        </div>
+                    `}
+                `;
+            } catch (err) {
+                document.getElementById('agent-drawer-content').innerHTML = `
+                    <div class="empty-state">
+                        <p class="empty-text">Error loading data</p>
+                        <p class="empty-sub">${err.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Initial load
+        loadAgents();
+    </script>
 </body>
 </html>
