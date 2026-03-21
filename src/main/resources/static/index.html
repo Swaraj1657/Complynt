@@ -1,312 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard — Complynt</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — ComplaintHub</title>
     <link rel="stylesheet" href="/css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <!-- Shell Bar injected by common.js -->
-    <div id="shell-bar"></div>
-
-    <!-- Left Nav injected by common.js -->
-    <nav id="left-nav-container"></nav>
-
-    <!-- Main Content -->
-    <main class="app-layout" id="main-content">
-        <div class="page-header">
-            <div class="page-header__left">
-                <h1 class="page-header__title">Dashboard</h1>
-                <p class="page-header__subtitle">Real-time overview of complaint operations</p>
-            </div>
-            <div class="page-header__actions">
-                <div class="seg-control" id="date-range-control">
-                    <button class="seg-btn" data-range="1" onclick="changeRange(1)">Today</button>
-                    <button class="seg-btn active" data-range="7" onclick="changeRange(7)">Week</button>
-                    <button class="seg-btn" data-range="30" onclick="changeRange(30)">Month</button>
-                </div>
-            </div>
+<div class="main">
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1>Dashboard</h1>
+            <p>Real-time overview of complaint operations</p>
         </div>
+    </div>
+    <div class="page-body" id="dashboard-body">
+        <div class="loading"><div class="spinner"></div>Loading dashboard...</div>
+    </div>
+</div>
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+<script>
+initLayout('dashboard');
 
-        <!-- KPI Tiles -->
-        <div class="kpi-grid" id="kpi-grid">
-            <div class="kpi-tile skeleton" style="height: 120px;"></div>
-            <div class="kpi-tile skeleton" style="height: 120px;"></div>
-            <div class="kpi-tile skeleton" style="height: 120px;"></div>
-            <div class="kpi-tile skeleton" style="height: 120px;"></div>
-        </div>
+async function loadDashboard() {
+    var el = document.getElementById('dashboard-body');
+    try {
+        var results = await Promise.all([api.getSummary(), api.getTrend(7)]);
+        var summary = results[0], trend = results[1];
 
-        <!-- Charts Row -->
-        <div class="chart-row mb-24">
-            <div class="chart-card">
-                <div class="chart-card__title">Complaint Trend</div>
-                <div class="chart-container" id="trend-chart-container">
-                    <canvas id="trend-chart"></canvas>
-                </div>
-            </div>
-            <div class="chart-card">
-                <div class="chart-card__title">Status Distribution</div>
-                <div class="chart-container" id="status-chart-container">
-                    <canvas id="status-chart"></canvas>
-                </div>
-            </div>
-        </div>
+        el.innerHTML =
+        '<div class="tile-grid">' +
+            '<div class="tile tile-info"><div class="tile-label">Total Complaints</div><div class="tile-value">' + summary.totalComplaints + '</div><div class="tile-sub">All time</div></div>' +
+            '<div class="tile tile-critical"><div class="tile-label">Open</div><div class="tile-value">' + summary.openCount + '</div><div class="tile-sub">Awaiting action</div></div>' +
+            '<div class="tile" style="border-top-color:#f59e0b;color:#f59e0b;"><div class="tile-label">In Progress</div><div class="tile-value">' + summary.inProgressCount + '</div><div class="tile-sub">Being resolved</div></div>' +
+            '<div class="tile tile-positive"><div class="tile-label">Resolved</div><div class="tile-value">' + summary.resolvedCount + '</div><div class="tile-sub">Completed</div></div>' +
+            '<div class="tile tile-purple"><div class="tile-label">Escalated</div><div class="tile-value">' + summary.escalatedCount + '</div><div class="tile-sub">Needs attention</div></div>' +
+            '<div class="tile tile-negative"><div class="tile-label">SLA Breached</div><div class="tile-value">' + summary.breachedSlaCount + '</div><div class="tile-sub">Overdue</div></div>' +
+        '</div>' +
 
-        <!-- Secondary Charts -->
-        <div class="grid-2 mb-24">
-            <div class="card">
-                <div class="card-header"><h3>By Product</h3></div>
-                <div class="card-body">
-                    <div class="bar-chart" id="chart-product" style="height: 180px;"></div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header"><h3>By Severity</h3></div>
-                <div class="card-body">
-                    <div class="bar-chart" id="chart-severity" style="height: 180px;"></div>
-                </div>
-            </div>
-        </div>
+        '<div class="grid-2 mb-24">' +
+            '<div class="card"><div class="card-header"><h3>Complaints by Product</h3></div><div class="card-body"><div class="bar-chart" id="chart-product"></div></div></div>' +
+            '<div class="card"><div class="card-header"><h3>Complaints by Severity</h3></div><div class="card-body"><div class="bar-chart" id="chart-severity"></div></div></div>' +
+        '</div>' +
 
-        <!-- Quick Links -->
-        <div class="grid-3">
-            <a href="/complaints.html" class="card" style="text-decoration: none;">
-                <div class="card-body" style="text-align: center; padding: 32px 20px;">
-                    <div style="font-size: 32px; margin-bottom: 12px; color: var(--color-primary);">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                            <polyline points="14 2 14 8 20 8"/>
-                            <line x1="16" y1="13" x2="8" y2="13"/>
-                            <line x1="16" y1="17" x2="8" y2="17"/>
-                        </svg>
-                    </div>
-                    <h3 style="font-size: 15px; font-weight: 600; color: var(--color-text);">View All Complaints</h3>
-                    <p style="font-size: 12px; color: var(--color-text-muted); margin-top: 4px;">Browse, filter, and manage</p>
-                </div>
-            </a>
-            <a href="/sla.html" class="card" style="text-decoration: none;">
-                <div class="card-body" style="text-align: center; padding: 32px 20px;">
-                    <div style="font-size: 32px; margin-bottom: 12px; color: var(--color-warning);">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                    </div>
-                    <h3 style="font-size: 15px; font-weight: 600; color: var(--color-text);">SLA Monitor</h3>
-                    <p style="font-size: 12px; color: var(--color-text-muted); margin-top: 4px;">Track breaches and at-risk</p>
-                </div>
-            </a>
-            <a href="/reports.html" class="card" style="text-decoration: none;">
-                <div class="card-body" style="text-align: center; padding: 32px 20px;">
-                    <div style="font-size: 32px; margin-bottom: 12px; color: var(--color-success);">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="20" x2="18" y2="10"/>
-                            <line x1="12" y1="20" x2="12" y2="4"/>
-                            <line x1="6" y1="20" x2="6" y2="14"/>
-                        </svg>
-                    </div>
-                    <h3 style="font-size: 15px; font-weight: 600; color: var(--color-text);">Reports & Export</h3>
-                    <p style="font-size: 12px; color: var(--color-text-muted); margin-top: 4px;">Generate compliance reports</p>
-                </div>
-            </a>
-        </div>
-    </main>
+        '<div class="card mb-24"><div class="card-header"><h3>Daily Trend \u2014 Last 7 Days</h3></div><div class="card-body"><div class="bar-chart" id="chart-trend" style="height:180px;"></div></div></div>' +
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toast-container"></div>
+        '<div class="card mb-24"><div class="card-header"><h3>Status Distribution</h3></div><div class="card-body"><div class="bar-chart" id="chart-status"></div></div></div>' +
 
-    <!-- Scripts -->
-    <script src="/js/config.js"></script>
-    <script src="/js/api.js"></script>
-    <script src="/js/common.js"></script>
-    <script>
-        // Initialize layout
-        initLayout('dashboard');
+        '<div class="grid-2">' +
+            '<a href="/complaints" class="card" style="text-decoration:none;"><div class="card-body" style="text-align:center;padding:32px;"><h3 style="color:var(--text);font-size:16px;">View All Complaints</h3><p style="color:var(--text-sec);font-size:12px;margin-top:4px;">Browse, filter, and manage</p></div></a>' +
+            '<a href="/sla" class="card" style="text-decoration:none;"><div class="card-body" style="text-align:center;padding:32px;"><h3 style="color:var(--text);font-size:16px;">SLA Monitor</h3><p style="color:var(--text-sec);font-size:12px;margin-top:4px;">Track breaches and at-risk</p></div></a>' +
+        '</div>';
 
-        let trendChart = null;
-        let statusChart = null;
-        let currentRange = 7;
+        renderBarChart('chart-product', summary.byProduct || {}, ['#0070f2','#107e3e','#e9730c','#bb0000','#7c3aed','#0891b2','#6c757d']);
+        renderBarChart('chart-severity', summary.bySeverity || {}, ['#bb0000','#e9730c','#0070f2','#6c757d']);
+        renderBarChart('chart-status', summary.byStatus || {}, ['#0070f2','#e9730c','#107e3e','#7c3aed','#6c757d']);
 
-        async function loadDashboard() {
-            try {
-                const [summary, trend] = await Promise.all([
-                    getDashboardStats(),
-                    getComplaintTrend(currentRange)
-                ]);
-
-                renderKPITiles(summary);
-                renderTrendChart(trend);
-                renderStatusChart(summary.byStatus || {});
-                renderBarChart('chart-product', summary.byProduct || {}, ['#0070F2', '#188918', '#E9730C', '#BB0000', '#7C3AED', '#0891B2', '#6C757D']);
-                renderBarChart('chart-severity', summary.bySeverity || {}, ['#BB0000', '#E9730C', '#0070F2', '#8C9BAB']);
-
-            } catch (err) {
-                showToast('Failed to load dashboard: ' + err.message, 'error');
-                document.getElementById('kpi-grid').innerHTML = `
-                    <div class="card" style="grid-column: 1 / -1;">
-                        <div class="card-body">
-                            <div class="empty-state">
-                                <p class="empty-text">Could not load dashboard data</p>
-                                <p class="empty-sub">${err.message}</p>
-                                <button class="btn btn-primary mt-16" onclick="loadDashboard()">Retry</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
+        if (trend && trend.length) {
+            var td = {}; trend.forEach(function(t) { td[t.date] = t.count; });
+            renderBarChart('chart-trend', td, ['#0070f2']);
+        } else {
+            document.getElementById('chart-trend').innerHTML = '<div class="empty-state"><p class="empty-text">No trend data yet. Create complaints to see trends.</p></div>';
         }
-
-        function renderKPITiles(summary) {
-            const kpiGrid = document.getElementById('kpi-grid');
-            kpiGrid.innerHTML = `
-                <div class="kpi-tile" onclick="window.location.href='/complaints.html'">
-                    <div class="kpi-tile__label">Total Complaints</div>
-                    <div class="kpi-tile__value">${summary.totalComplaints || 0}</div>
-                    <div class="kpi-tile__sub">All time</div>
-                </div>
-                <div class="kpi-tile kpi-tile--warning" onclick="window.location.href='/complaints.html?status=OPEN'">
-                    <div class="kpi-tile__label">Open</div>
-                    <div class="kpi-tile__value">${summary.openCount || 0}</div>
-                    <div class="kpi-tile__sub">Awaiting action</div>
-                </div>
-                <div class="kpi-tile kpi-tile--success" onclick="window.location.href='/complaints.html?status=RESOLVED'">
-                    <div class="kpi-tile__label">Resolved</div>
-                    <div class="kpi-tile__value">${summary.resolvedCount || 0}</div>
-                    <div class="kpi-tile__sub">Completed</div>
-                </div>
-                <div class="kpi-tile kpi-tile--danger" onclick="window.location.href='/sla.html'">
-                    <div class="kpi-tile__label">SLA Breached</div>
-                    <div class="kpi-tile__value">${summary.breachedSlaCount || 0}</div>
-                    <div class="kpi-tile__sub">Needs attention</div>
-                </div>
-            `;
-        }
-
-        function renderTrendChart(trend) {
-            const ctx = document.getElementById('trend-chart');
-            if (!ctx) return;
-
-            if (trendChart) {
-                trendChart.destroy();
-            }
-
-            if (!trend || !trend.length) {
-                document.getElementById('trend-chart-container').innerHTML = `
-                    <div class="empty-state" style="padding: 40px;">
-                        <p class="empty-text">No trend data available</p>
-                        <p class="empty-sub">Create complaints to see trends</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const labels = trend.map(t => formatDateShort(t.date));
-            const data = trend.map(t => t.count);
-
-            trendChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Complaints',
-                        data: data,
-                        borderColor: '#0070F2',
-                        backgroundColor: 'rgba(0, 112, 242, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#0070F2'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { size: 11 } }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: { 
-                                stepSize: 1,
-                                font: { size: 11 }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function renderStatusChart(statusData) {
-            const ctx = document.getElementById('status-chart');
-            if (!ctx) return;
-
-            if (statusChart) {
-                statusChart.destroy();
-            }
-
-            const labels = Object.keys(statusData).map(s => s.replace(/_/g, ' '));
-            const data = Object.values(statusData);
-
-            if (!data.length || data.every(d => d === 0)) {
-                document.getElementById('status-chart-container').innerHTML = `
-                    <div class="empty-state" style="padding: 40px;">
-                        <p class="empty-text">No status data</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const colors = ['#0070F2', '#E9730C', '#188918', '#7C3AED', '#8C9BAB'];
-
-            statusChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: colors,
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                padding: 12,
-                                font: { size: 11 }
-                            }
-                        }
-                    },
-                    cutout: '60%'
-                }
-            });
-        }
-
-        function changeRange(days) {
-            currentRange = days;
-            
-            // Update active button
-            document.querySelectorAll('#date-range-control .seg-btn').forEach(btn => {
-                btn.classList.toggle('active', parseInt(btn.dataset.range) === days);
-            });
-            
-            // Reload data
-            loadDashboard();
-        }
-
-        // Initial load
-        loadDashboard();
-    </script>
+    } catch (err) {
+        el.innerHTML = '<div class="empty-state"><p class="empty-text">Could not load dashboard</p><p class="empty-sub">' + err.message + '</p></div>';
+    }
+}
+loadDashboard();
+</script>
 </body>
 </html>

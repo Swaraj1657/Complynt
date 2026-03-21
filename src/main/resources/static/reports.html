@@ -1,35 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports — Complynt</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports — ComplaintHub</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <!-- Shell Bar injected by common.js -->
-    <div id="shell-bar"></div>
-
-    <!-- Left Nav injected by common.js -->
-    <nav id="left-nav-container"></nav>
-
-    <!-- Main Content -->
-    <main class="app-layout" id="main-content">
-        <div class="page-header">
-            <div class="page-header__left">
-                <h1 class="page-header__title">Reports & Export</h1>
-                <p class="page-header__subtitle">Generate regulatory compliance reports and CSV exports</p>
-            </div>
-        </div>
-
+<div class="main">
+    <div class="page-header">
+        <div class="page-header-left"><h1>Reports & Export</h1><p>Generate regulatory compliance reports and CSV exports</p></div>
+    </div>
+    <div class="page-body">
         <div class="grid-2 mb-24">
-            <!-- Export Card -->
             <div class="card">
-                <div class="card-header">
-                    <h3>Export Complaints to CSV</h3>
-                </div>
+                <div class="card-header"><h3>Export Complaints to CSV</h3></div>
                 <div class="card-body">
-                    <p style="font-size: 13px; color: var(--color-text-muted); margin-bottom: 20px; line-height: 1.6;">
+                    <p style="font-size:13px; color:var(--text-sec); margin-bottom:20px;">
                         Export complaint data for a date range. The CSV includes ticket number, customer details, product, severity, status, SLA info, sentiment, and assigned agent.
                     </p>
                     <div class="form-row">
@@ -42,269 +28,67 @@
                             <input type="date" id="to-date" class="form-control">
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="downloadExport()" style="width: 100%;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="7 10 12 15 17 10"/>
-                            <line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                        Download CSV
-                    </button>
+                    <button class="btn btn-primary" onclick="doExport()">Download CSV</button>
                 </div>
             </div>
-
-            <!-- Quick Analytics -->
             <div class="card">
-                <div class="card-header">
-                    <h3>Quick Analytics</h3>
-                    <button class="btn btn-sm btn-ghost" onclick="loadAnalytics()">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23 4 23 10 17 10"/>
-                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-                        </svg>
-                        Refresh
-                    </button>
-                </div>
+                <div class="card-header"><h3>Quick Analytics</h3></div>
                 <div class="card-body" id="quick-analytics">
                     <div class="loading"><div class="spinner"></div>Loading...</div>
                 </div>
             </div>
         </div>
 
-        <!-- Compliance Notes -->
-        <div class="card mb-24">
-            <div class="card-header">
-                <h3>Regulatory Compliance Notes</h3>
-            </div>
-            <div class="card-body">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-                    <div style="padding: 16px; background: var(--color-primary-light); border-radius: var(--radius-sm); border-left: 3px solid var(--color-primary);">
-                        <h4 style="font-size: 13px; font-weight: 600; color: var(--color-primary); margin-bottom: 8px;">Complaint Tracking</h4>
-                        <p style="font-size: 12px; line-height: 1.6; color: var(--color-text-muted);">
-                            All complaints are tracked with unique ticket numbers and full audit trails for every action taken.
-                        </p>
-                    </div>
-                    <div style="padding: 16px; background: var(--color-success-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--color-success);">
-                        <h4 style="font-size: 13px; font-weight: 600; color: var(--color-success); margin-bottom: 8px;">SLA Compliance</h4>
-                        <p style="font-size: 12px; line-height: 1.6; color: var(--color-text-muted);">
-                            SLA deadlines are automatically calculated based on severity. Auto-escalation triggers at configurable thresholds.
-                        </p>
-                    </div>
-                    <div style="padding: 16px; background: var(--color-warning-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--color-warning);">
-                        <h4 style="font-size: 13px; font-weight: 600; color: var(--color-warning); margin-bottom: 8px;">Customer Identity</h4>
-                        <p style="font-size: 12px; line-height: 1.6; color: var(--color-text-muted);">
-                            Customer 360 view prevents duplicate complaint confusion and maintains unified customer profiles.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Report Preview -->
         <div class="card">
-            <div class="card-header">
-                <h3>Report Preview</h3>
-                <div class="flex gap-8">
-                    <button class="btn btn-sm btn-ghost" onclick="printReport()">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 6 2 18 2 18 9"/>
-                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-                            <rect x="6" y="14" width="12" height="8"/>
-                        </svg>
-                        Print
-                    </button>
-                </div>
+            <div class="card-header"><h3>Regulatory Compliance Notes</h3></div>
+            <div class="card-body">
+                <p style="font-size:13px; line-height:1.8; color:var(--text-sec);">
+                    <strong style="color:var(--text);">RBI Banking Ombudsman Compliance:</strong><br>
+                    • All complaints are tracked with unique ticket numbers<br>
+                    • SLA deadlines are automatically calculated based on severity<br>
+                    • Auto-escalation triggers at configurable SLA thresholds<br>
+                    • Full audit trail maintained for every complaint action<br>
+                    • CSV export includes all fields required for regulatory reporting<br>
+                    • Customer 360° view prevents duplicate complaint confusion<br>
+                    • Regulatory-flagged complaints are highlighted for priority handling
+                </p>
             </div>
-            <div style="overflow-x: auto;">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Ticket #</th>
-                            <th>Customer</th>
-                            <th>Product</th>
-                            <th>Severity</th>
-                            <th>Status</th>
-                            <th>SLA Status</th>
-                            <th>Agent</th>
-                            <th>Created</th>
-                        </tr>
-                    </thead>
-                    <tbody id="preview-tbody">
-                        <tr><td colspan="8"><div class="loading"><div class="spinner"></div>Loading preview...</div></td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="pagination" id="preview-pagination"></div>
         </div>
-    </main>
+    </div>
+</div>
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+<script>
+initLayout('reports');
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toast-container"></div>
+// Set default to-date as today
+document.getElementById('to-date').value = new Date().toISOString().split('T')[0];
 
-    <!-- Scripts -->
-    <script src="/js/config.js"></script>
-    <script src="/js/api.js"></script>
-    <script src="/js/common.js"></script>
-    <script>
-        // Initialize layout
-        initLayout('reports');
+async function doExport() {
+    const from = document.getElementById('from-date').value;
+    const to = document.getElementById('to-date').value;
+    if (!from || !to) { showToast('Select both dates', 'error'); return; }
+    try {
+        await api.downloadCsv(from, to);
+        showToast('CSV downloaded!', 'success');
+    } catch(err) { showToast('Export failed: ' + err.message, 'error'); }
+}
 
-        // Set default to-date as today
-        document.getElementById('to-date').value = new Date().toISOString().split('T')[0];
-
-        let previewPage = 0;
-        let previewData = [];
-
-        async function loadAnalytics() {
-            const container = document.getElementById('quick-analytics');
-            container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
-
-            try {
-                const summary = await getDashboardStats();
-                container.innerHTML = `
-                    <ul class="info-list">
-                        <li class="info-row">
-                            <span class="info-label">Total Complaints</span>
-                            <span class="info-value mono" style="font-size: 18px; font-weight: 700;">${summary.totalComplaints || 0}</span>
-                        </li>
-                        <li class="info-row">
-                            <span class="info-label">Open</span>
-                            <span class="info-value">${summary.openCount || 0}</span>
-                        </li>
-                        <li class="info-row">
-                            <span class="info-label">In Progress</span>
-                            <span class="info-value">${summary.inProgressCount || 0}</span>
-                        </li>
-                        <li class="info-row">
-                            <span class="info-label">Resolved</span>
-                            <span class="info-value" style="color: var(--color-success);">${summary.resolvedCount || 0}</span>
-                        </li>
-                        <li class="info-row">
-                            <span class="info-label">Escalated</span>
-                            <span class="info-value" style="color: var(--color-purple);">${summary.escalatedCount || 0}</span>
-                        </li>
-                        <li class="info-row">
-                            <span class="info-label">SLA Breached</span>
-                            <span class="info-value" style="color: var(--color-danger);">${summary.breachedSlaCount || 0}</span>
-                        </li>
-                    </ul>
-                `;
-            } catch (err) {
-                container.innerHTML = `
-                    <div class="empty-state" style="padding: 20px;">
-                        <p class="empty-text">Error loading analytics</p>
-                        <button class="btn btn-sm btn-primary mt-16" onclick="loadAnalytics()">Retry</button>
-                    </div>
-                `;
-            }
-        }
-
-        async function loadPreview(page = 0) {
-            previewPage = page;
-            const tbody = document.getElementById('preview-tbody');
-            showTableSkeleton('preview-tbody', 8, 5);
-
-            try {
-                const data = await getComplaints({ page: previewPage, size: 10 });
-                previewData = data.content || [];
-
-                if (!previewData.length) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="8">
-                                <div class="empty-state" style="padding: 40px;">
-                                    <p class="empty-text">No complaints to preview</p>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                    document.getElementById('preview-pagination').innerHTML = '';
-                    return;
-                }
-
-                tbody.innerHTML = previewData.map(c => `
-                    <tr onclick="window.location.href='/complaint-detail.html?id=${c.id}'">
-                        <td><span class="id-cell">${c.ticketNumber || '\u2014'}</span></td>
-                        <td>${c.customer ? c.customer.fullName : '\u2014'}</td>
-                        <td style="font-size: 12px;">${productLabel(c.productType)}</td>
-                        <td>${severityBadge(c.severity)}</td>
-                        <td>${statusBadge(c.status)}</td>
-                        <td>${slaBadge(c.slaStatus)}</td>
-                        <td>${c.assignedAgent ? c.assignedAgent.name : '<span style="color: var(--color-text-light);">Unassigned</span>'}</td>
-                        <td class="mono" style="font-size: 12px; color: var(--color-text-muted);">${formatDateShort(c.createdAt)}</td>
-                    </tr>
-                `).join('');
-
-                renderPreviewPagination(data.totalPages || 1);
-
-            } catch (err) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="8">
-                            <div class="empty-state" style="padding: 40px;">
-                                <p class="empty-text">Error loading preview</p>
-                                <p class="empty-sub">${err.message}</p>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }
-        }
-
-        function renderPreviewPagination(totalPages) {
-            const pagination = document.getElementById('preview-pagination');
-            if (totalPages <= 1) {
-                pagination.innerHTML = '';
-                return;
-            }
-
-            let html = `
-                <button class="pagination-btn" onclick="loadPreview(${previewPage - 1})" ${previewPage === 0 ? 'disabled' : ''}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="15 18 9 12 15 6"/>
-                    </svg>
-                </button>
-                <span class="pagination-info">Page ${previewPage + 1} of ${totalPages}</span>
-                <button class="pagination-btn" onclick="loadPreview(${previewPage + 1})" ${previewPage >= totalPages - 1 ? 'disabled' : ''}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="9 18 15 12 9 6"/>
-                    </svg>
-                </button>
-            `;
-
-            pagination.innerHTML = html;
-        }
-
-        async function downloadExport() {
-            const from = document.getElementById('from-date').value;
-            const to = document.getElementById('to-date').value;
-
-            if (!from || !to) {
-                showToast('Please select both dates', 'warning');
-                return;
-            }
-
-            if (new Date(from) > new Date(to)) {
-                showToast('From date must be before To date', 'warning');
-                return;
-            }
-
-            try {
-                showToast('Preparing export...', 'info');
-                await downloadReportCsv(from, to);
-                showToast('CSV downloaded successfully', 'success');
-            } catch (err) {
-                showToast('Export failed: ' + err.message, 'error');
-            }
-        }
-
-        function printReport() {
-            window.print();
-        }
-
-        // Initial load
-        loadAnalytics();
-        loadPreview();
-    </script>
+async function loadQuickAnalytics() {
+    const el = document.getElementById('quick-analytics');
+    try {
+        const s = await api.getSummary();
+        el.innerHTML = '<ul class="info-list">' +
+            '<li class="info-row"><span class="info-label">Total Complaints</span><span class="info-value" style="font-size:18px;font-weight:800;">'+s.totalComplaints+'</span></li>' +
+            '<li class="info-row"><span class="info-label">Open</span><span class="info-value">'+s.openCount+'</span></li>' +
+            '<li class="info-row"><span class="info-label">In Progress</span><span class="info-value">'+s.inProgressCount+'</span></li>' +
+            '<li class="info-row"><span class="info-label">Resolved</span><span class="info-value" style="color:var(--positive)">'+s.resolvedCount+'</span></li>' +
+            '<li class="info-row"><span class="info-label">Escalated</span><span class="info-value" style="color:var(--purple)">'+s.escalatedCount+'</span></li>' +
+            '<li class="info-row"><span class="info-label">SLA Breached</span><span class="info-value" style="color:var(--negative)">'+s.breachedSlaCount+'</span></li>' +
+            '</ul>';
+    } catch(err) { el.innerHTML = '<p>Error loading</p>'; }
+}
+loadQuickAnalytics();
+</script>
 </body>
 </html>
