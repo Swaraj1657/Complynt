@@ -1,411 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complaints - Complynt</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaints — ComplaintHub</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <main class="app-layout" id="main-content">
-        <div class="page-header">
-            <div>
-                <h1 class="page-header__title">Complaints</h1>
-                <p class="page-header__subtitle">Browse, filter, and manage all complaints</p>
-            </div>
-            <div class="page-header__actions">
-                <button class="btn btn-secondary" onclick="exportSelected()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                    Export
-                </button>
-                <a href="/new-complaint.html" class="btn btn-primary">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="5" x2="12" y2="19"/>
-                        <line x1="5" y1="12" x2="19" y2="12"/>
-                    </svg>
-                    New Complaint
-                </a>
-            </div>
-        </div>
-
-        <!-- Data Table Card -->
-        <div class="data-table-wrap">
-            <!-- Filter Bar -->
-            <div class="filter-bar">
-                <input type="text" class="filter-input" id="search" placeholder="Search by ID, customer, keyword..." onkeyup="debounceSearch()">
-                <select class="filter-select" id="f-status" onchange="applyFilters()">
-                    <option value="">All Status</option>
-                    <option value="OPEN">Open</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="RESOLVED">Resolved</option>
-                    <option value="ESCALATED">Escalated</option>
-                    <option value="CLOSED">Closed</option>
+<div class="main">
+    <div class="page-header">
+        <div class="page-header-left"><h1>Complaints</h1><p>Browse, filter, and manage all complaints</p></div>
+    </div>
+    <div class="page-body">
+        <div class="card">
+            <div class="filter-toolbar">
+                <span class="filter-label">Filters:</span>
+                <select id="f-status" onchange="loadList()">
+                    <option value="">All Status</option><option value="OPEN">Open</option><option value="IN_PROGRESS">In Progress</option>
+                    <option value="RESOLVED">Resolved</option><option value="ESCALATED">Escalated</option><option value="CLOSED">Closed</option>
                 </select>
-                <select class="filter-select" id="f-product" onchange="applyFilters()">
-                    <option value="">All Products</option>
-                    <option value="CREDIT_CARD">Credit Card</option>
-                    <option value="HOME_LOAN">Home Loan</option>
-                    <option value="SAVINGS_ACCOUNT">Savings Account</option>
-                    <option value="FIXED_DEPOSIT">Fixed Deposit</option>
-                    <option value="INSURANCE">Insurance</option>
-                    <option value="PERSONAL_LOAN">Personal Loan</option>
-                    <option value="OTHER">Other</option>
+                <select id="f-product" onchange="loadList()">
+                    <option value="">All Products</option><option value="CREDIT_CARD">Credit Card</option><option value="HOME_LOAN">Home Loan</option>
+                    <option value="SAVINGS_ACCOUNT">Savings Account</option><option value="FIXED_DEPOSIT">Fixed Deposit</option>
+                    <option value="INSURANCE">Insurance</option><option value="PERSONAL_LOAN">Personal Loan</option><option value="OTHER">Other</option>
                 </select>
-                <select class="filter-select" id="f-severity" onchange="applyFilters()">
-                    <option value="">All Severity</option>
-                    <option value="P1">P1 Critical</option>
-                    <option value="P2">P2 High</option>
-                    <option value="P3">P3 Medium</option>
-                    <option value="P4">P4 Low</option>
+                <select id="f-severity" onchange="loadList()">
+                    <option value="">All Severity</option><option value="P1">P1 Critical</option><option value="P2">P2 High</option>
+                    <option value="P3">P3 Medium</option><option value="P4">P4 Low</option>
                 </select>
-                <input type="date" class="filter-input" id="f-from" style="min-width:140px;" onchange="applyFilters()">
-                <input type="date" class="filter-input" id="f-to" style="min-width:140px;" onchange="applyFilters()">
-                <button class="btn btn-ghost btn-sm" onclick="resetFilters()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="1 4 1 10 7 10"/>
-                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
-                    </svg>
-                    Reset
-                </button>
+                <button class="btn btn-ghost btn-sm" onclick="clearFilters()">Clear</button>
             </div>
-
-            <!-- Active Filter Tags -->
-            <div class="filter-tags" id="active-filter-tags"></div>
-
-            <!-- Data Table -->
             <div style="overflow-x:auto;">
-                <table class="data-table" id="complaints-table">
-                    <thead>
-                        <tr>
-                            <th style="width:40px;">
-                                <input type="checkbox" id="select-all" onchange="toggleSelectAll()">
-                            </th>
-                            <th onclick="sortBy('ticketNumber')">Ticket #</th>
-                            <th onclick="sortBy('title')">Title</th>
-                            <th onclick="sortBy('customer')">Customer</th>
-                            <th onclick="sortBy('productType')">Product</th>
-                            <th onclick="sortBy('severity')">Severity</th>
-                            <th onclick="sortBy('status')">Status</th>
-                            <th onclick="sortBy('slaStatus')">SLA</th>
-                            <th onclick="sortBy('assignedAgent')">Agent</th>
-                            <th onclick="sortBy('createdAt')">Created</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody">
-                        <tr><td colspan="10"><div class="loading"><div class="spinner"></div> Loading complaints...</div></td></tr>
-                    </tbody>
-                </table>
+                <table class="data-table"><thead><tr>
+                    <th>Ticket #</th><th>Title</th><th>Customer</th><th>Product</th><th>Severity</th><th>Status</th><th>SLA</th><th>Agent</th><th>Created</th>
+                </tr></thead><tbody id="tbody"><tr><td colspan="9"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody></table>
             </div>
-
-            <!-- Pagination -->
-            <div class="pagination" id="pagination"></div>
+            <div id="paging" class="pagination"></div>
         </div>
-
-        <!-- Bulk Actions Bar (hidden by default) -->
-        <div id="bulk-actions" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:white;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:12px 20px;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:16px;z-index:500;">
-            <span id="selected-count">0 selected</span>
-            <select class="filter-select" id="bulk-status" style="min-width:140px;">
-                <option value="">Change Status...</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="RESOLVED">Resolved</option>
-                <option value="ESCALATED">Escalated</option>
-                <option value="CLOSED">Closed</option>
-            </select>
-            <button class="btn btn-primary btn-sm" onclick="applyBulkStatus()">Apply</button>
-            <button class="btn btn-ghost btn-sm" onclick="clearSelection()">Cancel</button>
-        </div>
-    </main>
-
-    <!-- Toast Container -->
-    <div class="toast-container" id="toast-container"></div>
-
-    <!-- Scripts -->
-    <script src="/js/config.js"></script>
-    <script src="/js/api.js"></script>
-    <script src="/js/common.js"></script>
-    <script>
-        // Initialize layout
-        initLayout('complaints');
-
-        // State
-        let currentPage = 0;
-        let totalPages = 0;
-        let complaints = [];
-        let selectedIds = new Set();
-        let sortColumn = 'createdAt';
-        let sortDir = 'desc';
-        let searchTimeout = null;
-
-        // Debounced search
-        function debounceSearch() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(function() {
-                applyFilters();
-            }, 300);
-        }
-
-        // Apply filters
-        function applyFilters() {
-            currentPage = 0;
-            loadComplaints();
-            updateFilterTags();
-        }
-
-        // Reset filters
-        function resetFilters() {
-            document.getElementById('search').value = '';
-            document.getElementById('f-status').value = '';
-            document.getElementById('f-product').value = '';
-            document.getElementById('f-severity').value = '';
-            document.getElementById('f-from').value = '';
-            document.getElementById('f-to').value = '';
-            applyFilters();
-        }
-
-        // Update filter tags display
-        function updateFilterTags() {
-            const container = document.getElementById('active-filter-tags');
-            const filters = [];
-
-            const status = document.getElementById('f-status').value;
-            const product = document.getElementById('f-product').value;
-            const severity = document.getElementById('f-severity').value;
-            const from = document.getElementById('f-from').value;
-            const to = document.getElementById('f-to').value;
-
-            if (status) filters.push({ key: 'status', label: 'Status: ' + status.replace(/_/g, ' ') });
-            if (product) filters.push({ key: 'product', label: 'Product: ' + productLabel(product) });
-            if (severity) filters.push({ key: 'severity', label: 'Severity: ' + severity });
-            if (from) filters.push({ key: 'from', label: 'From: ' + from });
-            if (to) filters.push({ key: 'to', label: 'To: ' + to });
-
-            if (!filters.length) {
-                container.innerHTML = '';
-                return;
-            }
-
-            container.innerHTML = filters.map(function(f) {
-                return '<span class="filter-tag">' + f.label + 
-                    '<span class="filter-tag__remove" onclick="removeFilter(\'' + f.key + '\')">&times;</span></span>';
+    </div>
+</div>
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+<script>
+initLayout('complaints');
+var curPage = 0;
+function clearFilters() { document.getElementById('f-status').value=''; document.getElementById('f-product').value=''; document.getElementById('f-severity').value=''; loadList(); }
+async function loadList(page) {
+    curPage = page || 0;
+    var tbody = document.getElementById('tbody');
+    tbody.innerHTML = '<tr><td colspan="9"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr>';
+    try {
+        var data = await api.getComplaints({ page: curPage, size: 15,
+            status: document.getElementById('f-status').value,
+            productType: document.getElementById('f-product').value,
+            severity: document.getElementById('f-severity').value });
+        var list = data.content || [];
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-sec);">No complaints found</td></tr>';
+        } else {
+            tbody.innerHTML = list.map(function(c) {
+                return '<tr onclick="window.location.href=\'/complaint-detail.html?id='+c.id+'\'">' +
+                    '<td><span class="ticket-link">'+(c.ticketNumber||'\u2014')+'</span></td>' +
+                    '<td>'+(c.title||'\u2014')+'</td>' +
+                    '<td>'+(c.customer?c.customer.fullName:'\u2014')+'</td>' +
+                    '<td style="font-size:12px;">'+productLabel(c.productType)+'</td>' +
+                    '<td>'+severityBadge(c.severity)+'</td>' +
+                    '<td>'+statusBadge(c.status)+'</td>' +
+                    '<td>'+slaBadge(c.slaStatus)+'</td>' +
+                    '<td>'+(c.assignedAgent?c.assignedAgent.name:'<em style="color:var(--text-light)">Unassigned</em>')+'</td>' +
+                    '<td style="font-size:12px;color:var(--text-sec);">'+formatDateShort(c.createdAt)+'</td></tr>';
             }).join('');
         }
-
-        // Remove individual filter
-        function removeFilter(key) {
-            const mapping = {
-                status: 'f-status',
-                product: 'f-product',
-                severity: 'f-severity',
-                from: 'f-from',
-                to: 'f-to'
-            };
-            const el = document.getElementById(mapping[key]);
-            if (el) el.value = '';
-            applyFilters();
-        }
-
-        // Sort by column
-        function sortBy(column) {
-            if (sortColumn === column) {
-                sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-            } else {
-                sortColumn = column;
-                sortDir = 'asc';
-            }
-            loadComplaints();
-        }
-
-        // Load complaints
-        async function loadComplaints() {
-            const tbody = document.getElementById('tbody');
-            showTableSkeleton('tbody', 10, 8);
-
-            try {
-                const filters = {
-                    page: currentPage,
-                    size: DEFAULT_PAGE_SIZE || 15,
-                    status: document.getElementById('f-status').value,
-                    productType: document.getElementById('f-product').value,
-                    severity: document.getElementById('f-severity').value,
-                    fromDate: document.getElementById('f-from').value,
-                    toDate: document.getElementById('f-to').value
-                };
-
-                const data = await api.getComplaints(filters);
-                complaints = data.content || [];
-                totalPages = data.totalPages || 0;
-
-                renderTable();
-                renderPaginationControls();
-
-            } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><p class="empty-text">Failed to load complaints</p><p class="empty-sub">' + err.message + '</p></div></td></tr>';
-            }
-        }
-
-        // Render table
-        function renderTable() {
-            const tbody = document.getElementById('tbody');
-
-            if (!complaints.length) {
-                tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><p class="empty-text">No complaints found</p><p class="empty-sub">Try adjusting your filters or create a new complaint</p></div></td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = complaints.map(function(c) {
-                const isSelected = selectedIds.has(c.id);
-                return '<tr onclick="goToDetail(' + c.id + ', event)" class="' + (isSelected ? 'selected' : '') + '">' +
-                    '<td onclick="event.stopPropagation();"><input type="checkbox" class="row-checkbox" data-id="' + c.id + '" ' + (isSelected ? 'checked' : '') + ' onchange="toggleRow(this)"></td>' +
-                    '<td><span class="id-cell">' + (c.ticketNumber || 'TKT-' + c.id) + '</span></td>' +
-                    '<td><span class="truncate" style="max-width:200px;display:block;">' + escapeHtml(c.title || 'Untitled') + '</span></td>' +
-                    '<td>' + (c.customer ? escapeHtml(c.customer.fullName) : '<span class="text-muted">Unknown</span>') + '</td>' +
-                    '<td style="font-size:12px;">' + productLabel(c.productType) + '</td>' +
-                    '<td>' + severityBadge(c.severity) + '</td>' +
-                    '<td>' + statusBadge(c.status) + '</td>' +
-                    '<td>' + slaBadge(c.slaStatus) + '</td>' +
-                    '<td>' + (c.assignedAgent ? escapeHtml(c.assignedAgent.name) : '<span class="text-muted">Unassigned</span>') + '</td>' +
-                    '<td class="mono text-muted" style="font-size:12px;">' + formatDateShort(c.createdAt) + '</td>' +
-                '</tr>';
-            }).join('');
-        }
-
-        // Render pagination
-        function renderPaginationControls() {
-            const container = document.getElementById('pagination');
-            if (totalPages <= 1) {
-                container.innerHTML = '';
-                return;
-            }
-
-            let html = '<button class="pagination-btn" ' + (currentPage === 0 ? 'disabled' : '') + ' onclick="goToPage(' + (currentPage - 1) + ')">Prev</button>';
-            
-            // Page numbers
-            for (let i = 0; i < totalPages && i < 5; i++) {
-                const pageNum = currentPage < 3 ? i : currentPage - 2 + i;
-                if (pageNum >= totalPages) break;
-                html += '<button class="pagination-btn ' + (pageNum === currentPage ? 'active' : '') + '" onclick="goToPage(' + pageNum + ')">' + (pageNum + 1) + '</button>';
-            }
-
-            html += '<span class="pagination-info">of ' + totalPages + '</span>';
-            html += '<button class="pagination-btn" ' + (currentPage >= totalPages - 1 ? 'disabled' : '') + ' onclick="goToPage(' + (currentPage + 1) + ')">Next</button>';
-
-            container.innerHTML = html;
-        }
-
-        // Go to page
-        function goToPage(page) {
-            currentPage = page;
-            loadComplaints();
-        }
-
-        // Go to detail
-        function goToDetail(id, event) {
-            if (event.target.type === 'checkbox') return;
-            window.location.href = '/complaint-detail.html?id=' + id;
-        }
-
-        // Selection handlers
-        function toggleSelectAll() {
-            const isChecked = document.getElementById('select-all').checked;
-            document.querySelectorAll('.row-checkbox').forEach(function(cb) {
-                cb.checked = isChecked;
-                const id = parseInt(cb.getAttribute('data-id'));
-                if (isChecked) {
-                    selectedIds.add(id);
-                } else {
-                    selectedIds.delete(id);
-                }
-            });
-            updateBulkActions();
-        }
-
-        function toggleRow(checkbox) {
-            const id = parseInt(checkbox.getAttribute('data-id'));
-            if (checkbox.checked) {
-                selectedIds.add(id);
-            } else {
-                selectedIds.delete(id);
-            }
-            updateBulkActions();
-        }
-
-        function updateBulkActions() {
-            const bar = document.getElementById('bulk-actions');
-            const count = selectedIds.size;
-            if (count > 0) {
-                bar.style.display = 'flex';
-                document.getElementById('selected-count').textContent = count + ' selected';
-            } else {
-                bar.style.display = 'none';
-            }
-        }
-
-        function clearSelection() {
-            selectedIds.clear();
-            document.querySelectorAll('.row-checkbox').forEach(function(cb) { cb.checked = false; });
-            document.getElementById('select-all').checked = false;
-            updateBulkActions();
-        }
-
-        // Bulk status change
-        async function applyBulkStatus() {
-            const status = document.getElementById('bulk-status').value;
-            if (!status) {
-                showToast('Please select a status', 'warning');
-                return;
-            }
-
-            const ids = Array.from(selectedIds);
-            let success = 0;
-            let failed = 0;
-
-            for (const id of ids) {
-                try {
-                    await api.updateStatus(id, status, 'Bulk status update');
-                    success++;
-                } catch (e) {
-                    failed++;
-                }
-            }
-
-            showToast(success + ' complaints updated' + (failed > 0 ? ', ' + failed + ' failed' : ''), failed > 0 ? 'warning' : 'success');
-            clearSelection();
-            loadComplaints();
-        }
-
-        // Export selected
-        function exportSelected() {
-            const dataToExport = selectedIds.size > 0 
-                ? complaints.filter(c => selectedIds.has(c.id))
-                : complaints;
-
-            if (!dataToExport.length) {
-                showToast('No data to export', 'warning');
-                return;
-            }
-
-            const csvData = dataToExport.map(function(c) {
-                return {
-                    'Ticket': c.ticketNumber || 'TKT-' + c.id,
-                    'Title': c.title,
-                    'Customer': c.customer ? c.customer.fullName : '',
-                    'Product': productLabel(c.productType),
-                    'Severity': c.severity,
-                    'Status': c.status,
-                    'Agent': c.assignedAgent ? c.assignedAgent.name : '',
-                    'Created': c.createdAt
-                };
-            });
-
-            exportToCSV(csvData, 'complaints-export.csv');
-        }
-
-        // Initial load
-        loadComplaints();
-    </script>
+        var tp = data.totalPages || 0;
+        var pg = document.getElementById('paging');
+        if (tp <= 1) { pg.innerHTML = ''; return; }
+        pg.innerHTML = '<button '+(curPage===0?'disabled':'')+' onclick="loadList('+(curPage-1)+')">Prev</button>' +
+            '<span>Page '+(curPage+1)+' of '+tp+'</span>' +
+            '<button '+(curPage>=tp-1?'disabled':'')+' onclick="loadList('+(curPage+1)+')">Next</button>';
+    } catch (err) { tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>Error: '+err.message+'</p></div></td></tr>'; }
+}
+loadList();
+</script>
 </body>
 </html>
