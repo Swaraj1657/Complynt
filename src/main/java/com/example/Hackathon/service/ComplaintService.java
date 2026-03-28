@@ -45,6 +45,9 @@ public class ComplaintService {
     @Autowired
     private AgentNotificationService agentNotificationService;
 
+    @Autowired
+    private EmailSenderService emailSenderService;
+
     private static final ObjectMapper JSON = new ObjectMapper();
 
     @Transactional
@@ -245,6 +248,72 @@ public class ComplaintService {
         auditLogService.log(complaint, "Assigned to " + agent.getName(), assignedBy, oldAgent, agent.getName());
 
         complaint = complaintRepository.save(complaint);
+        return getById(id);
+    }
+
+    /**
+     * Escalates the case (status {@link ComplaintStatus#ESCALATED}), assigns {@code targetAgentId},
+     * records optional internal handoff note, and optionally emails the new assignee.
+     */
+    @Transactional
+    public ComplaintResponseDTO escalateComplaint(Long id, EscalateComplaintDTO dto, String updatedBy) {
+        Complaint complaint = complaintRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Complaint not found: " + id));
+        Agent agent = agentRepository.findById(dto.getTargetAgentId())
+                .orElseThrow(() -> new RuntimeException("Agent not found: " + dto.getTargetAgentId()));
+
+        String oldStatus = complaint.getStatus().name();
+        String oldAgent = complaint.getAssignedAgent() != null
+                ? complaint.getAssignedAgent().getName()
+                : "unassigned";
+        complaint.setAssignedAgent(agent);
+        complaint.setStatus(ComplaintStatus.ESCALATED);
+
+        auditLogService.log(complaint, "Escalation: case assigned to agent", updatedBy, oldAgent, agent.getName());
+        auditLogService.log(complaint, "Workflow stage updated", updatedBy, oldStatus, ComplaintStatus.ESCALATED.name());
+
+        if (dto.getInternalNote() != null && !dto.getInternalNote().isBlank()) {
+            ComplaintComment comment = ComplaintComment.builder()
+                    .complaint(complaint)
+                    .content("[Escalation handoff] " + dto.getInternalNote())
+                    .authorName("Agent")
+                    .authorRole("AGENT")
+                    .isInternal(true)
+                    .build();
+            if (complaint.getComments() == null) {
+                complaint.setComments(new ArrayList<>());
+            }
+            complaint.getComments().add(comment);
+            String snippet = dto.getInternalNote().length() > 500
+                    ? dto.getInternalNote().substring(0, 500) + "…"
+                    : dto.getInternalNote();
+            auditLogService.log(complaint, "Internal note (escalation handoff)", updatedBy, null, snippet);
+        }
+
+        complaint = complaintRepository.save(complaint);
+
+        boolean notifyAssignee = dto.getNotifyAssignedAgent() == null || dto.getNotifyAssignedAgent();
+        if (notifyAssignee && agent.getEmail() != null && !agent.getEmail().isBlank()) {
+            try {
+                String subj = "Escalated to you — " + complaint.getTicketNumber();
+                String body = "A complaint has been escalated and is now assigned to you.\n\n"
+                        + "Ticket: " + complaint.getTicketNumber() + "\n"
+                        + "Title: " + complaint.getTitle() + "\n"
+                        + "Customer: " + computeClientDisplayName(complaint) + "\n"
+                        + "Status: ESCALATED\n\n"
+                        + (dto.getInternalNote() != null && !dto.getInternalNote().isBlank()
+                                ? "Handoff note:\n" + dto.getInternalNote() + "\n\n"
+                                : "")
+                        + "— Complynt";
+                emailSenderService.sendAgentMessage(agent.getEmail().trim(), subj, body);
+                auditLogService.log(complaint, "Assigned agent notified by email (escalation)", "AGENT", null, agent.getEmail());
+            } catch (Exception e) {
+                auditLogService.log(complaint,
+                        "Escalation email to agent failed: " + e.getMessage(),
+                        updatedBy, null, null);
+            }
+        }
+
         return getById(id);
     }
 

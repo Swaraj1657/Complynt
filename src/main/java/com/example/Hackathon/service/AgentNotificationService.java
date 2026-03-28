@@ -4,6 +4,7 @@ import com.example.Hackathon.dto.AgentNotifyDTO;
 import com.example.Hackathon.entity.Complaint;
 import com.example.Hackathon.enums.Channel;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,6 +14,9 @@ public class AgentNotificationService {
     private final EmailSenderService emailSenderService;
     private final TwilioWhatsAppService twilioWhatsAppService;
     private final AuditLogService auditLogService;
+
+    @Value("${app.notifications.fallback-customer-email:}")
+    private String fallbackCustomerEmail;
 
     public void notifyCustomer(Complaint complaint, AgentNotifyDTO dto) {
         String requested = dto.getChannel() != null ? dto.getChannel().trim() : "";
@@ -27,7 +31,7 @@ public class AgentNotificationService {
         if ("WHATSAPP".equals(effective)) {
             String phone = resolvePhone(complaint);
             if (phone == null) {
-                if (auto && resolveEmail(complaint) != null) {
+                if (auto && hasEmailTarget(complaint)) {
                     effective = "EMAIL";
                 } else {
                     throw new IllegalStateException(
@@ -37,28 +41,77 @@ public class AgentNotificationService {
         }
 
         if ("EMAIL".equals(effective)) {
+            boolean usedFallback = false;
             String to = resolveEmail(complaint);
-            if (to == null) {
-                throw new IllegalStateException(
-                        "No email for this case — ensure complaint email or customer email is set.");
-            }
-            emailSenderService.sendAgentMessage(to, subject, body);
-        } else if ("WHATSAPP".equals(effective)) {
-            String phone = resolvePhone(complaint);
-            if (!twilioWhatsAppService.sendWhatsApp(phone, body)) {
-                if (auto && resolveEmail(complaint) != null) {
-                    emailSenderService.sendAgentMessage(resolveEmail(complaint), subject, body);
-                } else {
-                    throw new IllegalStateException(
-                            "WhatsApp send failed. Configure Twilio (app.twilio.*) or use email.");
+            if (to == null || to.isBlank()) {
+                if (fallbackCustomerEmail != null && !fallbackCustomerEmail.isBlank()) {
+                    to = fallbackCustomerEmail.trim();
+                    usedFallback = true;
                 }
             }
-        } else {
-            throw new IllegalArgumentException("channel must be EMAIL, WHATSAPP, or AUTO");
+            if (to == null || to.isBlank()) {
+                throw new IllegalStateException(
+                        "No email for this case and no fallback inbox configured (app.notifications.fallback-customer-email).");
+            }
+            String outboundBody = body;
+            if (usedFallback) {
+                outboundBody = "[Customer email not on file — sent to operations fallback inbox]\n"
+                        + "Ticket: " + complaint.getTicketNumber() + "\n"
+                        + "Original message to relay to the customer if applicable:\n\n" + body;
+            }
+            emailSenderService.sendAgentMessage(to, subject, outboundBody);
+            String logSnippet = dto.getMessage().length() > 400 ? dto.getMessage().substring(0, 400) + "..." : dto.getMessage();
+            String auditAction = usedFallback
+                    ? "Agent notified via EMAIL (fallback inbox: " + to + ")"
+                    : "Agent notified customer via EMAIL";
+            auditLogService.log(complaint, auditAction, "AGENT", null, logSnippet);
+            return;
         }
 
-        String logSnippet = dto.getMessage().length() > 400 ? dto.getMessage().substring(0, 400) + "..." : dto.getMessage();
-        auditLogService.log(complaint, "Agent notified customer via " + effective, "AGENT", null, logSnippet);
+        if ("WHATSAPP".equals(effective)) {
+            String phone = resolvePhone(complaint);
+            if (!twilioWhatsAppService.sendWhatsApp(phone, body)) {
+                if (auto && hasEmailTarget(complaint)) {
+                    boolean usedFallback = false;
+                    String to = resolveEmail(complaint);
+                    if (to == null || to.isBlank()) {
+                        if (fallbackCustomerEmail != null && !fallbackCustomerEmail.isBlank()) {
+                            to = fallbackCustomerEmail.trim();
+                            usedFallback = true;
+                        }
+                    }
+                    if (to == null || to.isBlank()) {
+                        throw new IllegalStateException(
+                                "WhatsApp send failed and no email or fallback inbox is available.");
+                    }
+                    String outboundBody = usedFallback
+                            ? "[Customer email not on file — sent to operations fallback inbox]\n"
+                            + "Ticket: " + complaint.getTicketNumber() + "\n\n" + body
+                            : body;
+                    emailSenderService.sendAgentMessage(to, subject, outboundBody);
+                    String logSnippet = dto.getMessage().length() > 400 ? dto.getMessage().substring(0, 400) + "..." : dto.getMessage();
+                    auditLogService.log(complaint,
+                            usedFallback ? "Agent notified via EMAIL after WhatsApp fail (fallback inbox)" : "Agent notified via EMAIL after WhatsApp fail",
+                            "AGENT", null, logSnippet);
+                    return;
+                }
+                throw new IllegalStateException(
+                        "WhatsApp send failed. Configure Twilio (app.twilio.*) or use email.");
+            }
+            String logSnippet = dto.getMessage().length() > 400 ? dto.getMessage().substring(0, 400) + "..." : dto.getMessage();
+            auditLogService.log(complaint, "Agent notified customer via WHATSAPP", "AGENT", null, logSnippet);
+            return;
+        }
+
+        throw new IllegalArgumentException("channel must be EMAIL, WHATSAPP, or AUTO");
+    }
+
+    private boolean hasEmailTarget(Complaint c) {
+        String e = resolveEmail(c);
+        if (e != null && !e.isBlank()) {
+            return true;
+        }
+        return fallbackCustomerEmail != null && !fallbackCustomerEmail.isBlank();
     }
 
     private static String defaultChannelForComplaint(Complaint c) {

@@ -24,6 +24,7 @@ import com.example.Hackathon.dto.ComplaintCommentDTO;
 import com.example.Hackathon.dto.ComplaintCreateDTO;
 import com.example.Hackathon.dto.ComplaintFilterDTO;
 import com.example.Hackathon.dto.ComplaintResponseDTO;
+import com.example.Hackathon.dto.EscalateComplaintDTO;
 import com.example.Hackathon.dto.StatusUpdateDTO;
 import com.example.Hackathon.enums.ComplaintStatus;
 import com.example.Hackathon.enums.ProductType;
@@ -84,6 +85,17 @@ public class ComplaintController {
             @PathVariable Long id,
             @Valid @RequestBody StatusUpdateDTO dto) {
         return ResponseEntity.ok(complaintService.updateStatus(id, dto, "AGENT"));
+    }
+
+    /**
+     * Sets status to ESCALATED, assigns {@link EscalateComplaintDTO#getTargetAgentId()},
+     * stores optional handoff note, and emails the assignee when enabled.
+     */
+    @PostMapping("/{id}/escalate")
+    public ResponseEntity<ComplaintResponseDTO> escalate(
+            @PathVariable Long id,
+            @Valid @RequestBody EscalateComplaintDTO dto) {
+        return ResponseEntity.ok(complaintService.escalateComplaint(id, dto, "AGENT"));
     }
 
     @PostMapping("/{id}/assign")

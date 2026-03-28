@@ -225,7 +225,7 @@
                                         <option value="">— No reassignment —</option>
                                         ${assignOpts}
                                     </select>
-                                    <p class="text-[9px] text-on-surface-variant mt-1">Pick another agent when escalating workload or handing off the case.</p>
+                                    <p class="text-[9px] text-on-surface-variant mt-1">Pick the agent who will own this escalation. Use the button below for a one-step hand-off (status → ESCALATED + assign + audit + email to agent).</p>
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Internal Note</label>
@@ -236,7 +236,7 @@
                                         <input type="checkbox" id="sync-notify-customer" class="rounded border-outline-variant"/>
                                         Email customer after sync
                                     </label>
-                                    <p class="text-[9px] text-on-surface-variant">Runs only when you click Synchronize Changes. Uses the case email (or linked customer).</p>
+                                    <p class="text-[9px] text-on-surface-variant">Runs only when you click Synchronize Changes. Uses the case email or customer email; if none is on file, messages go to the configured fallback inbox.</p>
                                     <div>
                                         <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Customer message</label>
                                         <textarea id="sync-customer-message" class="w-full bg-surface-container border border-outline-variant/20 rounded-lg py-2 px-3 text-sm min-h-[72px]" placeholder="Message sent to the customer if the box above is checked..."></textarea>
@@ -254,6 +254,10 @@
                                     <span class="material-symbols-outlined text-sm">database</span>
                                     Synchronize Changes
                                 </button>
+                                <button type="button" class="w-full mt-2 py-3 rounded-lg border-2 border-[#7a1f32] bg-[#faf6ed] text-[#5c1624] text-xs font-extrabold uppercase tracking-widest hover:bg-[#f0e8d8] transition-all flex justify-center items-center gap-2" onclick="escalateHandoff()">
+                                    <span class="material-symbols-outlined text-sm">upgrade</span>
+                                    Escalate &amp; hand off to selected agent
+                                </button>
                                 <button class="w-full mt-2 py-2 rounded-lg border border-primary/20 text-[10px] font-extrabold uppercase tracking-widest text-primary hover:bg-primary/5 transition-all" onclick="runAi()">Run AI Classification</button>
                             </div>
                         </div>
@@ -263,7 +267,7 @@
                                 <h2 class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Contact customer</h2>
                             </div>
                             <div class="p-6 space-y-3">
-                                <p class="text-[10px] text-on-surface-variant leading-relaxed">Default matches how the customer contacted you (email vs WhatsApp). WhatsApp needs Twilio and a phone on the customer record; otherwise email is used when possible.</p>
+                                <p class="text-[10px] text-on-surface-variant leading-relaxed">Default matches how the customer contacted you (email vs WhatsApp). If there is no email on the complaint or customer, the message is sent to the ops fallback address configured on the server.</p>
                                 <div>
                                     <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Channel</label>
                                     <select id="notify-channel" class="w-full bg-surface-container border border-outline-variant/20 rounded-lg py-2 px-3 text-sm">
@@ -307,6 +311,27 @@
                 </div>
             </div>
         `;
+    }
+
+    async function escalateHandoff() {
+        var assignEl = document.getElementById('assign-agent');
+        var agentId = assignEl && assignEl.value ? parseInt(assignEl.value, 10) : NaN;
+        if (!agentId) {
+            showToast('Select an agent in “Assign / escalate to agent”, then use this button.', 'error');
+            return;
+        }
+        var note = document.getElementById('note-content') ? document.getElementById('note-content').value.trim() : '';
+        try {
+            await api.escalateComplaint(compId, {
+                targetAgentId: agentId,
+                internalNote: note || null,
+                notifyAssignedAgent: true
+            });
+            showToast('Case escalated, reassigned, and the agent was emailed (if SMTP is configured).', 'success');
+            setTimeout(function () { loadDetail(); }, 800);
+        } catch (e) {
+            showToast('Escalation failed: ' + (e.message || e), 'error');
+        }
     }
 
     async function commitUpdate() {

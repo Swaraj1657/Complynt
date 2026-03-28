@@ -101,7 +101,7 @@ public class GroqLlmService {
     }
 
     private boolean isGroqConfigured() {
-        return groqApiKey != null && !groqApiKey.isBlank() && !"Your Key".equalsIgnoreCase(groqApiKey.trim());
+        return groqApiKey != null && !groqApiKey.isBlank() && !"Your token".equalsIgnoreCase(groqApiKey.trim());
     }
 
     @SuppressWarnings("unchecked")

@@ -17,7 +17,10 @@ const api = {
     },
     async patch(url, data) {
         const r = await fetch(API + url, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-        if (!r.ok) throw new Error(`PATCH ${url}: ${r.status}`);
+        if (!r.ok) {
+            const e = await r.json().catch(() => ({}));
+            throw new Error(e.message || `PATCH ${url}: ${r.status}`);
+        }
         return r.json();
     },
 
@@ -39,6 +42,8 @@ const api = {
     addComment(id, d) { return this.post('/complaints/' + id + '/comments', d); },
     classifyComplaint(id) { return this.post('/complaints/' + id + '/classify', {}); },
     notifyCustomer(id, d) { return this.post('/complaints/' + id + '/notify', d); },
+    /** Escalate case: sets ESCALATED, assigns targetAgentId, optional internalNote, notifyAssignedAgent */
+    escalateComplaint(id, d) { return this.post('/complaints/' + id + '/escalate', d); },
 
     getSummary() { return this.get('/analytics/summary'); },
     getTrend(days) { return this.get('/analytics/trend?days=' + (days || 7)); },
