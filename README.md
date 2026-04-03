@@ -13,21 +13,32 @@
 [![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![HTML5](https://img.shields.io/badge/HTML5-CSS3-E34F26?style=flat-square&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![Railway](https://img.shields.io/badge/Hosted_on-Railway-0B0D0E?style=flat-square&logo=railway&logoColor=white)](https://ubi.dpdns.org)
+[![Cloudflare](https://img.shields.io/badge/Network-Cloudflared-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://ubi.dpdns.org)
 
 ---
 
-[**Live Demo**](#-demo) · [**Features**](#-features) · [**Architecture**](#️-architecture) · [**Quick Start**](#️-quick-start) ·  [**Contributing**](#-contributing)
+[**🌐 Live Site**](https://ubi.dpdns.org) · [**📽️ Demo**](#-demo) · [**✨ Features**](#-features) · [**🏗️ Architecture**](#️-architecture) · [**⚙️ Quick Start**](#️-quick-start) · [**🤝 Contributing**](#-contributing)
 
 </div>
 
 ---
 
+## 🌐 Live Deployment
+
+> **The app is live!** Complynt is hosted on **Railway** with the backend network secured and tunneled via **Cloudflared**:
+>
+> ### 👉 [https://ubi.dpdns.org](https://ubi.dpdns.org)
+>
+> No setup required — visit the link to explore the Admin Dashboard and Customer Portal directly.
+
+---
+
 ## 📽️ Demo
 
-> ```
-> [![Demo Video](https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
-> ```
->
+[![Demo Video](https://img.youtube.com/vi/8ubigranyyE/maxresdefault.jpg)](https://www.youtube.com/watch?v=8ubigranyyE)
+
+> 🎬 **[Watch the full demo on YouTube →](https://www.youtube.com/watch?v=8ubigranyyE)**
 
 ---
 
@@ -41,6 +52,32 @@ Inspired by **SAP Fiori design principles**, Complynt delivers a polished, enter
 Customer submits complaint  →  AI classifies & routes  →  Agent resolves  →  Compliance report generated
       (any channel)              (auto, instant)           (guided by AI)       (one click)
 ```
+
+---
+
+## 📬 Contact & Support Channels
+
+Customers can raise complaints through the following channels:
+
+| Channel | Details |
+|---|---|
+| 🌐 **Web Portal** | [https://ubi.dpdns.org/new-complaint.html](https://ubi.dpdns.org/new-complaint) |
+| 💬 **WhatsApp** | Send a message to **+1 (415) 523-8886** *(See instructions below)* |
+| 📧 **Email** | [ubi.customer.help@gmail.com](mailto:ubi.customer.help@gmail.com) |
+
+### WhatsApp Setup Instructions
+
+To submit a complaint via WhatsApp:
+
+1. **First**, send the joining code to activate the sandbox:
+   ```
+   join congress-buffalo
+   ```
+   Send this message to **+1 (415) 523-8886** on WhatsApp.
+
+2. Once joined, you can send your complaint message directly to the same number.
+
+> ⚠️ **Note:** The joining code step is required only once per device to connect to the WhatsApp sandbox. After that, you can message directly.
 
 ---
 
@@ -111,6 +148,16 @@ Customer submits complaint  →  AI classifies & routes  →  Agent resolves  �
 │                        MySQL 8.0+                           │
 │         Complaints | Agents | Customers | SLA Rules         │
 │         Audit Logs | Actions | Communication History        │
+└───────────────────────────────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────┐
+│                  RAILWAY (App Hosting)                      │
+│              Spring Boot JAR — built from GitHub            │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────┐
+│           CLOUDFLARED (Backend Network / Tunnel)            │
+│         Secure tunnel → Cloudflare DNS → ubi.dpdns.org      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -127,6 +174,47 @@ Customer submits complaint  →  AI classifies & routes  →  Agent resolves  �
 
 ---
 
+## ☁️ Deployment
+
+Complynt uses a **dual-layer deployment setup**:
+
+```
+User Browser
+    │
+    ▼
+Cloudflare DNS (ubi.dpdns.org)
+    │
+    ▼
+Railway (Frontend / Spring Boot App)
+    │
+    ▼
+Cloudflared Tunnel (Backend / Network Layer)
+    │
+    ▼
+MySQL Database
+```
+
+| Layer | Platform | Role |
+|---|---|---|
+| **App Hosting** | [Railway](https://railway.app) | Builds and runs the Spring Boot application from GitHub |
+| **Network / Backend** | [Cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) | Secure tunnel exposing the backend — no open ports needed |
+| **DNS** | Cloudflare | Routes `ubi.dpdns.org` to the live deployment |
+
+### Environment Variables on Railway
+
+Configure these in your Railway project's **Variables** tab instead of `application.properties`:
+
+| Variable | Value |
+|---|---|
+| `SPRING_DATASOURCE_URL` | `jdbc:mysql://<host>:<port>/complynt_db` |
+| `SPRING_DATASOURCE_USERNAME` | *(from your DB provider)* |
+| `SPRING_DATASOURCE_PASSWORD` | *(from your DB provider)* |
+| `SPRING_JPA_HIBERNATE_DDL_AUTO` | `update` |
+| `SERVER_PORT` | `8080` |
+
+> 💡 Cloudflared sits in front of the backend network layer, giving you DDoS protection, HTTPS, and a stable public endpoint — without exposing any ports directly.
+
+---
 
 ## ⚙️ Quick Start
 
@@ -176,6 +264,7 @@ spring.jpa.hibernate.ddl-auto=update
 |---|---|
 | 🖥️ **Admin Dashboard** | http://localhost:8080/ |
 | 🌐 **Customer Complaint Portal** | http://localhost:8080/new-complaint.html |
+| ☁️ **Live (Cloudflare)** | https://ubi.dpdns.org |
 
 ---
 
@@ -221,6 +310,9 @@ Complynt/
 - [x] Immutable audit log for compliance
 - [x] CSV export for regulatory reporting
 - [x] AI Gateway service stub (classification, sentiment, draft responses)
+- [x] Live deployment on Railway (app) + Cloudflared (backend network) at [ubi.dpdns.org](https://ubi.dpdns.org)
+- [x] WhatsApp complaint channel (+1 415-523-8886)
+- [x] Email complaint channel (ubi.customer.help@gmail.com)
 - [ ] Python AI microservice integration (NLP pipeline)
 - [ ] Real-time notifications (WebSocket)
 - [ ] Multi-channel ingestion (Email, WhatsApp, Twitter/X)
