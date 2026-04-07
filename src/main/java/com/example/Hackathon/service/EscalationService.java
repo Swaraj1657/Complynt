@@ -6,14 +6,22 @@ import com.example.Hackathon.entity.EscalationRule;
 import com.example.Hackathon.enums.ComplaintStatus;
 import com.example.Hackathon.repository.ComplaintRepository;
 import com.example.Hackathon.repository.EscalationRuleRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
 public class EscalationService {
+
+    private static final Logger log = LoggerFactory.getLogger(EscalationService.class);
 
     @Autowired
     private ComplaintRepository complaintRepository;
@@ -27,8 +35,24 @@ public class EscalationService {
     @Autowired
     private AuditLogService auditLogService;
 
-    @Transactional
-    public void checkAndEscalate(Complaint complaint) {
+    /**
+     * Self-reference so {@link #checkAndEscalate(Long)} runs in {@link Propagation#REQUIRES_NEW}.
+     * Same-class calls bypass Spring proxies and would otherwise keep one transaction for all rows
+     * (long locks → deadlocks with concurrent complaint updates).
+     */
+    @Autowired
+    @Lazy
+    private EscalationService self;
+
+    /**
+     * One transaction per complaint: short row locks, avoids deadlocks with API/concurrent writers.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void checkAndEscalate(Long complaintId) {
+        Complaint complaint = complaintRepository.findById(complaintId).orElse(null);
+        if (complaint == null) {
+            return;
+        }
         if (complaint.getStatus() == ComplaintStatus.RESOLVED
                 || complaint.getStatus() == ComplaintStatus.CLOSED) {
             return;
@@ -55,12 +79,17 @@ public class EscalationService {
         }
     }
 
-    @Transactional
     public void checkAllOpen() {
         List<Complaint> openComplaints = complaintRepository.findByStatusNot(ComplaintStatus.RESOLVED);
+        openComplaints.sort(Comparator.comparing(Complaint::getId));
         for (Complaint complaint : openComplaints) {
             if (complaint.getStatus() != ComplaintStatus.CLOSED) {
-                checkAndEscalate(complaint);
+                try {
+                    self.checkAndEscalate(complaint.getId());
+                } catch (CannotAcquireLockException e) {
+                    log.warn("SLA escalation skipped for complaint {} due to lock contention; will retry on next run",
+                            complaint.getId(), e);
+                }
             }
         }
     }
